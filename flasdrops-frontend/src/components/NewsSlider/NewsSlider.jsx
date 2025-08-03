@@ -1,23 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import './NewsSlider.css';
-import slide1 from '/images/slide1.jpg';
+
+import slide1 from '/images/slide1.png';
 import slide2 from '/images/slide2.jpg';
 import slide3 from '/images/slide3.jpg';
 
 const slides = [
   {
     image: slide1,
-    buttonText: 'Открыть кейс',
+    buttonText: 'ПРИНЯТЬ УЧАСТИЕ',
     link: '/cases/1'
   },
   {
     image: slide2,
-    buttonText: 'Соснуть хуй',
+    buttonText: 'ПОДПИСАТЬСЯ',
     link: '/deposit'
   },
   {
     image: slide3,
-    buttonText: 'Депнуть сотку',
+    buttonText: 'ПОЛУЧИТЬ НАГРАДУ',
     link: '/giveaway'
   }
 ];

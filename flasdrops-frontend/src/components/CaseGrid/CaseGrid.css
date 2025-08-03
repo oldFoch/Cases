@@ -7,7 +7,7 @@
 }
 
 .case-card {
-  width: 200px;
+  width: 300px;
   background: #1a1a1a;
   border-radius: 10px;
   text-align: center;
@@ -22,9 +22,10 @@
 }
 
 .case-img {
-  width: 100%;
+  margin-top: 20px;
+  width: 75%;
   border-radius: 10px 10px 0 0;
-  height: 140px;
+  height: 200px;
   object-fit: cover;
 }
 
@@ -32,9 +33,15 @@
   font-size: 18px;
   font-weight: bold;
   margin-top: 10px;
+  font-family: Inter, sans-serif;
+  font-weight: 600; 
+  letter-spacing: 1px;
 }
 
 .case-price {
   margin: 10px 0;
   color: #ff4d4d;
+   font-family: Inter, sans-serif;
+  font-weight: 600; 
+  letter-spacing: 1px;
 }

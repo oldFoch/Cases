@@ -1,35 +1,47 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
+:root {
+  --neon-color: #e4026c;
+}
+
+/* Включаем box-sizing для всей шапки, чтобы padding не «выпячивал» за 100% ширины */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .header {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 80px;                 /* зафиксировали высоту шапки */
+  height: 80px;
   background: #13131c;
   z-index: 1000;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
   font-family: 'Poppins', sans-serif;
-  overflow-x: hidden;           /* чтобы ничего не вылазило по горизонтали */
+  overflow-x: hidden;   /* запрещаем горизонтальный скролл */
+  overflow-y: hidden;   /* запрещаем вертикальный скролл */
 }
 
 .header-wrap {
-  height: 100%;                 /* тянемся на всю высоту шапки */
-  padding: 0 24px;              /* убрали вертикальные паддинги */
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 24px;         /* теперь учитывается в box-sizing */
 }
 
 .logo img {
-  height: 120px;                 /* увеличили логотип */
+  height: 100px;            /* увеличенный логотип */
   display: block;
+  padding-right: 20px;
 }
 
 .nav {
   flex: 1 1 auto;
   min-width: 0;
-  margin: 0 24px;
+  margin: 0;               /* убрали любые внешние отступы */
   overflow: hidden;
 }
 
@@ -40,9 +52,14 @@
   padding: 0;
   overflow-x: auto;
   white-space: nowrap;
+  scrollbar-width: none;   /* Firefox */
+  -ms-overflow-style: none;/* IE10+ */
 }
 
-.nav-list::-webkit-scrollbar { display: none; }
+.nav-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;               /* скрываем webkit-скроллбар */
+}
 
 .nav-list a {
   color: #ffffff;
@@ -52,11 +69,28 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: color 0.2s;
+  position: relative;
+  transition: color 0.2s, text-shadow 0.2s;
 }
 
 .nav-list a:hover {
-  color: #ffeb27;
+  color: var(--neon-color);
+  text-shadow: 0 0 8px var(--neon-color);
+}
+
+.nav-list a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--neon-color);
+  transition: width 0.3s;
+}
+
+.nav-list a:hover::after {
+  width: 100%;
 }
 
 .icon {
@@ -68,6 +102,7 @@
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+  margin-left: auto;       /* прижимаем кнопки строго к правому краю */
 }
 
 .btn {
@@ -76,9 +111,10 @@
   cursor: pointer;
   padding: 8px 12px;
   border-radius: 4px;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
@@ -88,16 +124,18 @@
 
 .btn.login:hover {
   background: rgba(255,255,255,0.1);
+  border-color: var(--neon-color);
 }
 
 .btn.logout {
   color: #ffffff;
-  padding: 8px;   /* квадратная кнопка без текста */
+  padding: 8px;            /* квадратная кнопка без текста */
   gap: 0;
 }
 
 .btn.logout:hover {
   background: rgba(255,255,255,0.1);
+  border-color: var(--neon-color);
 }
 
 .btn-text {
@@ -111,7 +149,6 @@
   border: none;
   color: #ffffff;
   font-size: 24px;
-  margin-left: 16px;
   cursor: pointer;
 }
 
@@ -119,7 +156,7 @@
 @media (max-width: 768px) {
   .nav {
     position: absolute;
-    top: 80px;                  /* сразу под шапкой */
+    top: 80px;
     left: 0;
     right: 0;
     background: #13131c;

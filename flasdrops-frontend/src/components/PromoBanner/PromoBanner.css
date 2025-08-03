@@ -33,18 +33,22 @@
   color: #fff;
   font-size: 20px;
   font-weight: bold;
+  font-family: 'Digital-7', monospace;
 }
 
 .banner-button {
-  background-color: red;
+  background: #DC143C;
   color: white;
   padding: 10px 24px;
-  font-size: 16px;
+  font-family: Inter, sans-serif;
+  font-weight: 600; 
+  letter-spacing: 1px;
+  font-size: 14px;
   text-decoration: none;
   border-radius: 6px;
   transition: background-color 0.3s ease;
 }
 
 .banner-button:hover {
-  background-color: darkred;
+  box-shadow: 2px 2px 5px 2px rgb(0, 4, 255);
 }
