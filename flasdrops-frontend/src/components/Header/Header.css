@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;                 /* зафиксировали высоту шапки */
+  background: #13131c;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;           /* чтобы ничего не вылазило по горизонтали */
+}
+
+.header-wrap {
+  height: 100%;                 /* тянемся на всю высоту шапки */
+  padding: 0 24px;              /* убрали вертикальные паддинги */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo img {
+  height: 120px;                 /* увеличили логотип */
+  display: block;
+}
+
+.nav {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 24px;
+  overflow: hidden;
+}
+
+.nav-list {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.nav-list::-webkit-scrollbar { display: none; }
+
+.nav-list a {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s;
+}
+
+.nav-list a:hover {
+  color: #ffeb27;
+}
+
+.icon {
+  font-size: 18px;
+}
+
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid #ffffff;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn.login {
+  color: #ffffff;
+}
+
+.btn.login:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.btn.logout {
+  color: #ffffff;
+  padding: 8px;   /* квадратная кнопка без текста */
+  gap: 0;
+}
+
+.btn.logout:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.btn-text {
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 24px;
+  margin-left: 16px;
+  cursor: pointer;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+  .nav {
+    position: absolute;
+    top: 80px;                  /* сразу под шапкой */
+    left: 0;
+    right: 0;
+    background: #13131c;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease;
+  }
+
+  .header-wrap.open .nav {
+    max-height: 300px;
+  }
+
+  .nav-list {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .auth-section {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+}

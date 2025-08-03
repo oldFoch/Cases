@@ -1,0 +1,40 @@
+.case-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  padding: 40px;
+}
+
+.case-card {
+  width: 200px;
+  background: #1a1a1a;
+  border-radius: 10px;
+  text-align: center;
+  color: white;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.case-card:hover {
+  transform: scale(1.05);
+}
+
+.case-img {
+  width: 100%;
+  border-radius: 10px 10px 0 0;
+  height: 140px;
+  object-fit: cover;
+}
+
+.case-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.case-price {
+  margin: 10px 0;
+  color: #ff4d4d;
+}

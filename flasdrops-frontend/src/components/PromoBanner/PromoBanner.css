@@ -1,0 +1,50 @@
+.promo-banner {
+  position: relative;
+  width: 80%;
+  height: 120px;
+  margin: -60px auto 40px; /* накладывается на слайдер */
+  z-index: 2;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.banner-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 20px;
+  background: rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+.timer {
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.banner-button {
+  background-color: red;
+  color: white;
+  padding: 10px 24px;
+  font-size: 16px;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.banner-button:hover {
+  background-color: darkred;
+}

@@ -1,0 +1,57 @@
+.slider-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  margin-top: 50px;
+}
+
+.slider-slide {
+  width: 100%;
+  height: 700px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.slider-button {
+ border-radius: 8px;
+  text-align: center;
+  width: 125px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: red;
+  color: white;
+  padding: 12px 24px;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.slider-pagination {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  justify-content: center;
+}
+
+.pagination-bar {
+  margin-bottom: 160px;
+  width: 50px;
+  height: 4px;
+  background-color: rgba(255,255,255,0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.pagination-fill {
+  height: 100%;
+  background-color: red;
+  transition: width 0.06s linear; /* плавнее */
+}

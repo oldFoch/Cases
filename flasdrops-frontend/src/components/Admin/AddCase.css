@@ -1,0 +1,54 @@
+.add-case-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #1e1e1e;
+  border-radius: 8px;
+  color: white;
+}
+
+.add-case-container input {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  background: #2c2c2c;
+  border: 1px solid #444;
+  color: white;
+}
+
+.item-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.item-form input {
+  width: 100%;
+}
+
+.item-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.item-list li {
+  background: #333;
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+}
+
+button {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background-color: red;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: darkred;
+}
