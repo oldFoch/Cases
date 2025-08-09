@@ -1,8 +1,8 @@
+// flashdrops-backend/src/middleware/auth.js
+
 module.exports = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    req.user.id = req.user._id; // нужно для удобства, чтобы id был доступен как req.user.id
+  if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }
-  return res.status(401).json({ error: "Unauthorized" });
+  res.status(401).json({ error: 'Not authenticated' });
 };
-

@@ -1,0 +1,68 @@
+/* flashdrops-frontend/src/components/Footer/Footer.css */
+
+.footer {
+  background: #13131c;
+  color: #ffffff;
+  padding: 24px;
+  font-size: 0.9em;
+}
+
+.footer-nav {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.footer-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  gap: 24px;
+}
+
+.footer-nav-list a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-nav-list a:hover {
+  color: #ffeb27;
+}
+
+.footer-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.footer-text {
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.footer-logo-opens {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-logo {
+  height: 40px;
+}
+
+.opens-text {
+  font-weight: 600;
+}
+
+.footer-copy {
+  font-size: 0.8em;
+  color: #888;
+}

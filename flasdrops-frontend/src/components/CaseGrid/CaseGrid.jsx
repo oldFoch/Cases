@@ -10,37 +10,30 @@ export default function CaseGrid() {
 
   useEffect(() => {
     axios
-      .get('http://localhost:5000/api/cases', { withCredentials: true })
+      .get('/api/cases')      // прокси в vite.config.js направляет на localhost:5000
       .then(res => setCases(res.data))
       .catch(() => setCases([]));
   }, []);
 
   const resolveImage = (path) => {
-    // Если полный URL — возвращаем как есть
     if (/^https?:\/\//.test(path)) {
       return path;
     }
-    // Если путь уже начинается с /images/, возвращаем его напрямую
-    if (/^\/images\//.test(path)) {
+    if (path.startsWith('/images/')) {
       return path;
     }
-    // Иначе убираем все лидирующие слэши и добавляем /images/
     const filename = path.replace(/^\/+/, '');
     return `/images/${filename}`;
   };
 
   if (cases.length === 0) {
-    return (
-      <div className="case-grid loading">
-        Кейсы не найдены или ошибка загрузки.
-      </div>
-    );
+    return <div className="case-grid loading">Кейсы не найдены.</div>;
   }
 
   return (
     <div className="case-grid">
       {cases.map(c => (
-        <Link to={`/cases/${c._id}`} className="case-card" key={c._id}>
+        <Link to={`/cases/${c.id}`} className="case-card" key={c.id}>
           <img
             src={resolveImage(c.image)}
             alt={c.name}

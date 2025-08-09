@@ -1,0 +1,1 @@
+New-Item -ItemType Directory -Force -Path "$HOME\.cloud-certs" | Out-Null; Invoke-WebRequest -Uri "https://st.timeweb.com/cloud-static/ca.crt" -OutFile "$HOME\.cloud-certs\root.crt"; icacls "$HOME\.cloud-certs\root.crt" /inheritance:r /grant:r "$env:USERNAME`:R"

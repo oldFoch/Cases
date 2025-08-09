@@ -1,0 +1,120 @@
+.ticker {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  width: 100%;
+  height: 112px;
+  background: #0f0f14;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.ticker-track {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.ticker-item {
+  position: relative;         /* для оверлея превью кейса */
+  display: inline-block;
+  margin-right: 12px;
+  text-decoration: none;
+  border-radius: 10px;        /* совпадает с карточкой */
+  overflow: hidden;           /* чтобы превью не выходило за края */
+}
+
+.ticker-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #16161e;
+  border: 1px solid #2a2a36;
+  border-radius: 10px;
+  padding: 8px 10px;
+  min-width: 220px;
+  max-width: 260px;
+  height: 86px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  color: #fff;
+
+  /* анимация скрытия при ховере */
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.ticker-item:hover .ticker-box {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.drop-img {
+  width: 78px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 0 6px rgba(0,0,0,.35);
+  flex-shrink: 0;
+}
+
+.t-left { overflow: hidden; }
+
+.t-name {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.t-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #bdbdc7;
+}
+
+.t-user { font-weight: 600; color: #fff; }
+.t-dot  { opacity: .6; }
+.t-price{ color: #ff4d6d; font-weight: 800; }
+
+/* === Превью кейса — теперь это оверлей той же карточки === */
+.case-preview {
+  position: absolute;
+  inset: 0;                   /* заполняет всю область .ticker-item */
+  padding: 8px 10px;          /* как у .ticker-box */
+  background: #0f0f14;
+  border: 1px solid #2a2a36;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;        /* клик остаётся на ссылке */
+
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.02);
+  transition: opacity .18s ease, visibility .18s ease, transform .18s ease;
+}
+
+.ticker-item:hover .case-preview {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+.case-preview-img {
+  max-width: 130%;
+  max-height: 130%;
+  object-fit: contain;
+  display: block;
+}

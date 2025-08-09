@@ -1,80 +1,237 @@
 .case-details {
-  padding: 100px 24px 24px; /* учёт фиксированной шапки */
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.case-title { margin-bottom: 8px; }
+
+/* ---- РУЛЕТКА ---- */
+.spin-area {
+  position: relative;
+  margin: 35vh 0 12px;
+  overflow: visible; /* позволяем лого выходить за рамки */
+}
+
+/* окно с лентой */
+.reel-window {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border: 2px solid #444;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f0f14;
+  transition: filter .35s ease, transform .35s ease;
+}
+
+/* лёгкое размытие до открытия */
+.spin-area.idle .reel-window {
+  filter: blur(2.4px) brightness(0.95) saturate(1.05);
+}
+
+/* лента */
+.reel-strip {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateX(0) translateY(-50%);
+  display: flex;
+  gap: 16px; /* === JS CARD_GAP */
+  padding: 0;
+  will-change: transform;
+}
+
+.reel-card {
+  width: 180px;     /* === JS CARD_W */
+  flex: 0 0 180px;
   text-align: center;
   color: #fff;
 }
 
-.case-title {
-  margin-bottom: 16px;
-  font-size: 2rem;
-}
-
-.case-banner {
+.reel-card img {
   width: 100%;
-  height: 300px;
-  background-size: cover;
-  background-position: center;
-  margin-bottom: 16px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 0 10px rgba(0,0,0,.5);
 }
 
-.case-price {
-  margin-bottom: 32px;
-  font-size: 1.2rem;
+.reel-card-name {
+  font-size: 12px;
+  margin-top: 6px;
+  opacity: 0.9;
 }
 
-.roulette-container {
+/* центральный маркер */
+.center-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-1px);
+  background: linear-gradient(to bottom, transparent 0, #ffeb27 40%, #ffeb27 60%, transparent 100%);
+  box-shadow: 0 0 10px rgba(255,235,39,0.7);
+  pointer-events: none;
+}
+
+/* ---- ЛОГО КЕЙСА СВЕРХУ ---- */
+.case-cover {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  z-index: 4;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: none; /* не мешаем кликам по кнопкам ниже */
+  will-change: transform, opacity, filter;
+}
+
+/* изображение больше, может выходить за рамки */
+.case-banner-img {
+  width: clamp(380px, 66vw, 260px);
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 30px rgba(0,0,0,.55));
+  transition: transform .28s ease, opacity .28s ease, filter .28s ease;
+}
+
+/* мягкое пульсирование до открытия */
+.spin-area.idle .case-banner-img {
+  animation: logoPulse 2800ms ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%,100% { transform: scale(1); filter: drop-shadow(0 14px 30px rgba(0,0,0,.55)); }
+  50%     { transform: scale(1.03); filter: drop-shadow(0 18px 36px rgba(0,0,0,.6)); }
+}
+
+/* красивая анимация скрытия лого при старте */
+.spin-area.spinning .case-cover {
+  animation: logoOut 420ms cubic-bezier(.22,.68,0,1.06) forwards;
+}
+
+@keyframes logoOut {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  60%  { opacity: .9; transform: translate(-50%, -54%) scale(1.06) rotate(-0.5deg); }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(1.14) rotate(-1deg); }
+}
+
+/* КНОПКА И ЦЕНА — ниже ленты */
+.open-controls {
+  margin: 14px 0 20px;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-bottom: 32px;
 }
 
-.roulette-item {
-  width: 120px;
-  background: #242430;
-  border-radius: 8px;
-  padding: 8px;
-  text-align: center;
+.case-price-tag {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #161a2e;
+  border: 1px solid #2a3357;
+  font-weight: 800;
+  letter-spacing: .4px;
+  color: #fff;
 }
 
-.roulette-item img {
-  width: 100%;
-  border-radius: 4px;
-}
-
-.item-info {
-  margin-top: 8px;
-}
-
-.item-name {
-  display: block;
-  font-size: 0.9rem;
-}
-
-.item-chance {
-  display: block;
-  font-size: 0.8rem;
-  color: #aaa;
-}
-
-.spin-button {
-  padding: 12px 32px;
-  font-size: 1rem;
-  background: #e4026c;
+.open-btn {
+  min-width: 200px;
+  height: 46px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #e4026c, #ff4d4d);
   color: #fff;
+  font-weight: 800;
+  letter-spacing: .5px;
   cursor: pointer;
-  transition: background 0.2s;
+  box-shadow: 0 8px 20px rgba(228,2,108,.35);
+  transition: transform .08s ease, opacity .2s ease, box-shadow .2s ease;
+}
+.open-btn:hover { opacity: .95; box-shadow: 0 10px 24px rgba(228,2,108,.45); }
+.open-btn:active { transform: translateY(1px); }
+.open-btn:disabled { opacity: .6; cursor: default; box-shadow: none; }
+
+/* ---- РЕЗУЛЬТАТ И КНОПКИ ---- */
+.result-actions { margin: 12px 0 24px; }
+
+.result-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  background: #16161e;
 }
 
-.spin-button:hover {
-  background: #c0035a;
+.result-card img {
+  width: 80px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
-.loading {
-  padding: 100px 24px;
+.result-info { text-align: left; }
+.result-name { font-weight: 600; }
+.result-price { opacity: 0.85; }
+
+.result-buttons {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.spin-again-btn,
+.sell-btn2 {
+  background: #1f8a70;
   color: #fff;
-  font-size: 1.2rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  width: 280px;
+}
+
+.spin-again-btn { padding: 20px 24px; font-size: 18px; }
+.sell-btn2 { padding: 10px 24px; font-size: 26px; width: 280px; background: linear-gradient(90deg, #e4026c, #ff4d4d); }
+
+.spin-again-btn:hover,
+.sell-btn2:hover { filter: brightness(1.05); }
+
+/* ---- СЕТКА СОДЕРЖИМОГО КЕЙСА ---- */
+.items-list {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  justify-items: center;
+  gap: 16px;
+  margin: 24px auto;
+  max-width: 1000px;
+}
+
+.roulette-item { width: 180px; }
+
+.item-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.item-info { margin-top: 6px; }
+.item-name { display: block; font-weight: 600; }
+.item-price { display: block; color: #888; }
+
+/* адаптив */
+@media (max-width: 768px) {
+  .spin-area { margin: 30vh 0 12px; }
+  .case-banner-img { width: clamp(360px, 84vw, 720px); }
+  .open-btn { min-width: 180px; }
+  .spin-again-btn, .sell-btn { width: 240px; }
 }

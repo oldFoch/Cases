@@ -7,11 +7,12 @@ const transactionSchema = new mongoose.Schema({
     enum: ["deposit", "case_open", "sell", "withdraw"],
     required: true
   },
-  amount: Number, // сумма пополнения / продажи
+  amount: Number, // сумма списания/пополнения
   item: {
-    name: String,
-    image: String,
-    price: Number
+    caseName: String,  // название кейса
+    name: String,      // название выпавшего предмета
+    image: String,     // ссылка на изображение предмета
+    price: Number      // цена выпавшего предмета
   },
   createdAt: { type: Date, default: Date.now }
 });
