@@ -78,7 +78,9 @@ export default function Header() {
                  <Link to="/profile" className="btn avatar-btn" title="Профиль">
                 <img src={user.avatar} alt={user.username} className="avatar" />
               </Link>
+              <Link to="/donate" className="btn avatar-btn" title="Профиль">
                 <span className="user-balance">{user.balance}₽</span>
+                </Link>
               </button>
           
             </div>

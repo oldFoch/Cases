@@ -11,6 +11,7 @@ import Profile      from './components/Profile/Profile.jsx';
 import Footer       from './components/Footer/Footer.jsx';
 import NewsSlider   from './components/NewsSlider/NewsSlider.jsx';
 import PromoBanner  from './components/PromoBanner/PromoBanner.jsx';
+import DonatePage from './components/Donate/DonatePage';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
         }/>
         <Route path="/cases/:id" element={<CaseDetails />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/donate/:handle?" element={<DonatePage />} />
       </Routes>
     </>
   );

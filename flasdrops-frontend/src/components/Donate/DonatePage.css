@@ -1,0 +1,227 @@
+:root {
+  --bg: #0e0f14;
+  --card: #151724;
+  --line: #262a3f;
+  --text: #e6e6f0;
+  --muted: #a5abc5;
+  --accent: #e4026c;
+  --accent-2: #ff4d4d;
+  --chip: #1d2032;
+  --chip-active: #232845;
+  --green: #19b27b;
+
+  /* RGB glow */
+  --rgb-thickness: 2px;   /* толщина кольца-подсветки */
+  --rgb-spread: 18px;     /* радиус мягкого свечения */
+}
+
+.donate-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(1200px 600px at 70% -10%, #1b1f34 0%, transparent 60%), var(--bg);
+  padding: 120px 16px 48px;
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* === КАРТОЧКА С RGB-ПОДСВЕТКОЙ === */
+.donate-card {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  background: linear-gradient(180deg, #1a1d2f, #14182a);
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  border-radius: 16px;
+  padding: 24px;
+  isolation: isolate;          /* корректная слоистость для псевдоэлементов */
+}
+
+/* Внешнее мягкое RGB-свечение */
+.donate-card::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--rgb-spread));
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    #ff004d, #ffd500, #00ff87, #00c2ff, #a100ff, #ff004d
+  );
+  filter: blur(var(--rgb-spread)) saturate(1.15);
+  opacity: .55;
+  z-index: -1;
+  pointer-events: none;
+  animation: rgb-rotate 12s linear infinite;
+}
+
+/* Тонкое «кольцо» RGB по контуру карточки */
+.donate-card::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--rgb-thickness));
+  border-radius: inherit;
+  padding: var(--rgb-thickness);
+  background: conic-gradient(
+    from 0deg,
+    #ff004d, #ffd500, #00ff87, #00c2ff, #a100ff, #ff004d
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: rgb-rotate 6s linear infinite;
+}
+
+/* Плавное вращение градиента */
+@keyframes rgb-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.donate-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2a2f4d, #1c213b);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.02);
+}
+
+.creator {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  margin: 0;
+}
+
+.form { margin-top: 12px; }
+
+.field { display: block; margin: 14px 0; }
+
+.label {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.input:focus {
+  border-color: #33406a;
+  box-shadow: 0 0 0 3px rgba(70, 100, 200, .2);
+}
+
+.textarea { resize: vertical; min-height: 92px; }
+
+/* сумма */
+.amount-wrap { position: relative; }
+
+.amount {
+  padding-right: 40px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ruble {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.presets {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: var(--chip);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.chip:hover { transform: translateY(-1px); }
+.chip.active {
+  background: var(--chip-active);
+  border-color: #38406a;
+}
+
+/* методы оплаты */
+.pay-methods { display: grid; gap: 10px; margin: 16px 0 6px; }
+.methods { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.method {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .08s ease, border-color .15s ease, background .15s ease;
+}
+.method:hover { transform: translateY(-1px); }
+.method.selected { border-color: #3d466f; background: #1b2038; }
+
+/* кнопка оплаты */
+.pay-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: .3px;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(228,2,108,.35);
+  transition: transform .08s ease, opacity .2s ease, box-shadow .2s ease;
+  margin-top: 10px;
+}
+.pay-btn:hover { opacity: .95; box-shadow: 0 16px 34px rgba(228,2,108,.45); }
+.pay-btn:active { transform: translateY(1px); }
+.pay-btn:disabled { opacity: .6; cursor: default; box-shadow: none; }
+
+.terms {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.terms a { color: #a9b4ff; text-decoration: none; }
+.terms a:hover { text-decoration: underline; }
+
+/* адаптив */
+@media (max-width: 560px) {
+  .donate-card { padding: 18px; }
+  .creator { font-size: 20px; }
+}
