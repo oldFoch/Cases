@@ -1,0 +1,12 @@
+.topnav{
+  position:sticky; top:0; z-index:1000;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px; background:#141414; border-bottom:1px solid #2b2b2b;
+}
+.tn-left{ display:flex; gap:12px; align-items:center; }
+.tn-right{ display:flex; gap:12px; align-items:center; }
+.tn-logo{ font-weight:900; color:#ffd000; text-decoration:none; letter-spacing:.5px; }
+.tn-link{ color:#eee; text-decoration:none; padding:6px 10px; border-radius:8px; background:#1a1a1a; border:1px solid #2b2b2b; }
+.tn-admin{ background:#2b2b2b; border-color:#444; }
+.tn-user{ display:flex; gap:8px; align-items:center; color:#fff; text-decoration:none; }
+.tn-user img{ width:28px; height:28px; border-radius:50%; border:1px solid #2b2b2b; object-fit:cover; }

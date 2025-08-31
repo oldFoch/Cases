@@ -1,20 +1,53 @@
-.case-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 24px;
+.case-wrapper {
   padding: 40px;
 }
 
+.case-group {
+  margin-bottom: 60px;
+}
+
+.case-group-title {
+  font-size: 28px;
+  color: white;
+  font-weight: bold;
+  margin: 20px 0;
+  font-family: Inter, sans-serif;
+  text-align: center;
+}
+
+.case-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: -100px;
+  row-gap: 32px;
+  justify-content: center;
+  padding: 0 20px;
+  max-width: 1580px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.case-card-wrapper {
+  position: relative;
+  width: 360px;
+  height: 620px;
+}
+
 .case-card {
-  width: 300px;
   background: #1a1a1a;
-  border-radius: 10px;
+  width: 100%;
+  border-radius: 12px;
   text-align: center;
   color: white;
   text-decoration: none;
   transition: transform 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  padding-bottom: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .case-card:hover {
@@ -22,26 +55,130 @@
 }
 
 .case-img {
-  margin-top: 20px;
-  width: 75%;
-  border-radius: 10px 10px 0 0;
-  height: 200px;
+  margin-top: 0px;
+  width: 90%;
+  border-radius: 12px;
+  height: 550px;
   object-fit: cover;
 }
 
 .case-name {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 600;
   margin-top: 10px;
   font-family: Inter, sans-serif;
-  font-weight: 600; 
   letter-spacing: 1px;
 }
 
-.case-price {
-  margin: 10px 0;
-  color: #ff4d4d;
-   font-family: Inter, sans-serif;
-  font-weight: 600; 
-  letter-spacing: 1px;
+/* Цена убрана из карточки */
+.price {
+  display: none;
+}
+
+/* Стили для всплывающего окна с качествами */
+.qualities-popup {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 380px;
+  background: #2a2a2a;
+  border: 2px solid #444;
+  border-radius: 12px;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  margin-top: 15px;
+}
+
+.qualities-popup h4 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: white;
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+}
+
+.qualities-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: white;
+}
+
+.qualities-table th,
+.qualities-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.qualities-table th {
+  background: #333;
+  font-weight: 600;
+  color: #fff;
+}
+
+.qualities-table td {
+  color: #ccc;
+}
+
+.qualities-table tr:last-child td {
+  border-bottom: none;
+}
+
+.loading-text,
+.no-data {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+  font-style: italic;
+  font-family: Inter, sans-serif;
+}
+
+.case-grid.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 18px;
+  grid-column: 1 / -1;
+}
+
+/* Адаптивность */
+@media (max-width: 1600px) {
+  .case-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .case-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  .case-wrapper {
+    padding: 20px;
+  }
+  
+  .case-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+  
+  .qualities-popup {
+    width: 320px;
+    left: 20px;
+    transform: none;
+  }
+  
+  .case-card-wrapper {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+  }
 }

@@ -149,10 +149,14 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-}
-.user-balance {
-  color: #fff;
+  }
+.balance-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #1a1a1a;
+  color: #ffd000;
   font-weight: 600;
+  text-decoration: none;
 }
 .user-dropdown {
   position: absolute;
@@ -223,10 +227,42 @@
 }
 
 
-.avatar {
+.avatar-btn img {
+  border-radius: 50%;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
+/* переключатель режимов */
+.mode-switch{
+  display:flex;
+  gap:6px;
+  background:#1a1a1a;
+  border:1px solid #2b2b2b;
+  border-radius:12px;
+  padding:4px;
+  margin-left:16px;
+}
+
+.mode-btn{
+  padding:8px 14px;
+  border-radius:8px;
+  border:0;
+  background:transparent;
+  color:#ddd;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.mode-btn.active{
+  background:#ffd000;
+  color:#111;
+}
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* расстояние между аватаркой и балансом */
+}
+
+/* убираем старый nav отступ если пустой */
+.nav .nav-list{ display:none; }

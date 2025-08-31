@@ -1,0 +1,177 @@
+:root{
+  --bg:#0f0f0f;
+  --panel:#141414;
+  --panel-2:#1a1a1a;
+  --border:#2b2b2b;
+  --text:#f6d645;
+  --text-dim:#c7ad3c;
+  --accent:#ffd000;
+  --accent-2:#ffea76;
+}
+
+/* Подложка и выравнивание секции */
+.towers-viewport{
+  min-height: calc(100vh - 160px); /* подгони под высоту хедера/тикера */
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.towers-wrap.centered{
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  gap:20px;
+  width:100%;
+  max-width: 1800px;
+}
+
+/* ЛЕВО: поле */
+.board-wrap{
+  --cell-size: 64px;  /* выставляется JS */
+  --grid-gap: 8px;    /* выставляется JS */
+  --board-height: auto;
+  --board-width: auto;
+
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  height: var(--board-height);
+  width: var(--board-width);
+}
+
+
+
+.board-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:10px;
+}
+.board-head .ttl{ font-weight:900; color:var(--text); letter-spacing:.4px; }
+.board-head .st{ font-size:13px; color:#bbb; }
+.board-head .st.playing{ color:#9ae09a; }
+.board-head .st.boom{ color:#ff6a6a; }
+.board-head .st.cashout{ color:#78caff; }
+
+/* Сетка */
+.board-grid.horizontal{
+  display:grid;
+}
+
+/* Клетки — квадратные (var(--cell-size)) */
+.board-grid.horizontal .cell{
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius:10px;
+  border:1px solid var(--border);
+  background: var(--panel-2);
+  display:grid; place-items:center;
+  font-weight:800;
+  font-size:18px;
+  color:#cfd6e0;
+  cursor: default;
+  transition:.15s;
+  position:relative;
+  overflow:hidden;
+}
+
+.board-grid.horizontal .cell.active{
+  border-color: var(--accent);
+  cursor: pointer;
+}
+.board-grid.horizontal .cell.active:hover{
+  box-shadow: 0 0 0 2px #ffd00033 inset;
+}
+
+.board-grid.horizontal .cell.safe{
+  background: linear-gradient(180deg, rgba(80,200,120,0.12), rgba(80,200,120,0.04));
+  border-color: #3a7f55;
+  color:#d7ffe9;
+}
+.board-grid.horizontal .cell.bomb{
+  background: linear-gradient(180deg, rgba(255,60,48,0.15), rgba(255,60,48,0.05));
+  border-color:#7a2b28;
+  color:#ffdada;
+}
+.board-grid.horizontal .cell img{
+  width:36px; height:36px; object-fit:contain;
+}
+
+/* ПРАВО: узкая панель (~в 3 раза уже) */
+.side-wrap{
+  width: 300px;            /* фикс — узко */
+  flex: 0 0 auto;
+  display:flex;
+}
+.panel{
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  width: 100%;
+}
+
+.row2{ margin-bottom:12px; }
+
+.lb{
+  display:block;
+  font-size:13px;
+  color:var(--text-dim);
+  margin-bottom:6px;
+}
+
+.bet{
+  display:flex; gap:8px; align-items:center;
+}
+.bet input{
+  width:160px;
+  background: var(--panel-2);
+  border:1px solid var(--border);
+  color:#fff;
+  border-radius:10px;
+  padding:10px 12px;
+  outline:none;
+}
+.bet span{ opacity:.9; }
+
+.diffs{
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+.chip{
+  padding:10px 12px;
+  background:#2b2b2b;
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:#fff;
+  cursor:pointer;
+  transition:.15s;
+}
+.chip.active{
+  background: var(--accent);
+  color:#121212;
+  border-color: transparent;
+}
+.chip:disabled{ opacity:.6; cursor:not-allowed; }
+
+.hint{ font-size:12px; color:#aaa; margin-top:6px; }
+
+.big{ font-weight:900; font-size:22px; color: var(--accent-2); }
+
+.actions{
+  display:flex; gap:8px; margin-top:6px; margin-bottom:10px;
+}
+.btn{ padding:10px 14px; border-radius:12px; border:0; font-weight:800; cursor:pointer; }
+.btn.primary{ background: var(--accent); color:#121212; }
+.btn.ghost{ background:#2b2b2b; color:#fff; }
+.btn.danger{ background:#ff3b30; color:#fff; }
+
+.desc{ margin-top:8px; font-size:13px; color:#cfcfcf; }
+.desc ul{ margin:6px 0 0 16px; }
+.desc li{ margin:2px 0; }
+
+/* адаптив */
+@media (max-width: 1200px){
+  .towers-wrap.centered{ flex-direction:column; align-items:center; }
+  .side-wrap{ width: 100%; max-width: 560px; }
+  .board-wrap{ width: auto; }
+}

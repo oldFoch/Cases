@@ -1,214 +1,274 @@
+'use strict';
+
 const express = require('express');
-const db = require('../db');
-const auth = require('../middleware/auth');
-const { fetchSteamPrice } = require('../services/priceUpdater');
-
 const router = express.Router();
+const db = require('../db');
 
-const ALWAYS_LIVE = String(process.env.ALWAYS_LIVE_PRICES || 'false') === 'true';
-const REQ_DELAY_MS = Number(process.env.PRICE_REQUEST_DELAY_MS || 600);
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const NODE_ENV = (process.env.NODE_ENV || 'development').toLowerCase();
+const EXPOSE_ERRORS = process.env.DEBUG_ERRORS === '1' || NODE_ENV !== 'production';
 
-// ===== Helpers
-async function repriceItemById(itemId, marketHashName) {
-  const price = await fetchSteamPrice(marketHashName);
-  await db.query(
-    `UPDATE case_items
-        SET price = $1, price_updated_at = NOW()
-      WHERE id = $2`,
-    [price, itemId]
-  );
-  await db.query(
-    `UPDATE user_inventory
-        SET price_current = $1
-      WHERE item_id = $2
-        AND is_sold = FALSE`,
-    [price, itemId]
-  );
-  return price;
-}
+const expose = (e, stage) => ({
+  error: 'Ошибка открытия кейса',
+  ...(EXPOSE_ERRORS ? {
+    details: `[${stage}] ${e?.message || String(e)}`,
+    stack: e?.stack || String(e)
+  } : {})
+});
 
-// ===== Routes
+/* ---------- ОТКРЫТЬ КЕЙС ---------- */
+router.post('/open', async (req, res) => {
+  let stage = 'init';
+  try {
+    stage = 'auth';
+    const userId = req.session?.passport?.user?.id || req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Вы не авторизованы' });
 
-// Все кейсы (без предметов)
+    stage = 'input';
+    const cid = Number(req.body?.case_id);
+    if (!cid) return res.status(400).json({ error: 'case_id отсутствует' });
+
+    stage = 'load_case';
+    const c = await db.query(
+      `SELECT id, COALESCE(price_rub, price,0)::numeric(12,2) AS price_rub
+       FROM cases WHERE id=$1 LIMIT 1`, [cid]
+    );
+    if (!c.rowCount) return res.status(404).json({ error: 'Кейс не найден' });
+    const priceRub = Number(c.rows[0].price_rub || 0);
+
+    stage = 'load_items';
+    const it = await db.query(
+      `SELECT u.id, u.base_name, u.market_hash_name, u.image, u.price_minor,
+              COALESCE(NULLIF(ci.weight,0), 1)::numeric AS weight
+       FROM case_items ci
+       JOIN items_unique u ON u.id = ci.item_unique_id
+       WHERE ci.case_id = $1`, [cid]
+    );
+    if (!it.rowCount) return res.status(400).json({ error: 'Нет предметов в кейсе' });
+
+    stage = 'validate_items';
+    const items = it.rows.filter(r => {
+      const price = Number(r.price_minor || 0);
+      const hasValidPrice = price > 0 && price < 1000000000;
+      const hasValidName = !!(r.market_hash_name || r.base_name);
+      const hasValidImage = !!r.image;
+      
+      return hasValidPrice && hasValidName && hasValidImage;
+    });
+    
+    if (!items.length) {
+      console.error('Нет валидных предметов в кейсе:', cid, 'Предметы:', it.rows.map(r => ({
+        id: r.id,
+        name: r.market_hash_name || r.base_name,
+        price_minor: r.price_minor,
+        hasImage: !!r.image
+      })));
+      return res.status(400).json({ error: 'Нет валидных предметов в кейсе' });
+    }
+
+    stage = 'pick_winner';
+    const totalW = items.reduce((s, x) => s + Number(x.weight || 1), 0);
+    let rnd = Math.random() * totalW;
+    let won = items[0];
+    for (const x of items) { rnd -= Number(x.weight || 1); if (rnd <= 0) { won = x; break; } }
+
+    const client = await db.getClient();
+    try {
+      stage = 'tx_begin';
+      await client.query('BEGIN');
+
+      stage = 'lock_balance';
+      const balQ = await client.query(`SELECT balance FROM users WHERE id=$1 FOR UPDATE`, [userId]);
+      const balance = Number(balQ.rows[0]?.balance || 0);
+      if (!Number.isFinite(balance)) throw new Error('Некорректный баланс пользователя');
+      if (balance < priceRub) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Недостаточно средств' });
+      }
+
+      stage = 'select_random_quality';
+      // Ищем все качества этого скина в items_master
+      const baseName = won.base_name || won.market_hash_name;
+      const qualitiesQuery = await client.query(
+        `SELECT id, market_hash_name, price_rub 
+         FROM items_master 
+         WHERE SPLIT_PART(market_hash_name, ' (', 1) = $1
+         AND price_rub > 0`,
+        [baseName]
+      );
+
+      let wonItemMasterId;
+      let wonPriceMinor;
+      let wonMarketHashName;
+
+      // Если есть другие качества, выбираем случайное
+      if (qualitiesQuery.rows.length > 0) {
+        const randomQuality = qualitiesQuery.rows[Math.floor(Math.random() * qualitiesQuery.rows.length)];
+        wonItemMasterId = randomQuality.id;
+        wonPriceMinor = Math.round(randomQuality.price_rub * 100);
+        wonMarketHashName = randomQuality.market_hash_name;
+      } else {
+        // Если нет других качеств, используем базовое
+        wonItemMasterId = won.id;
+        wonPriceMinor = Number(won.price_minor);
+        wonMarketHashName = won.market_hash_name;
+      }
+
+      stage = 'charge_balance';
+      await client.query(
+        `UPDATE users SET balance = balance - $1::numeric WHERE id = $2::bigint`,
+        [priceRub, userId]
+      );
+
+      stage = 'insert_inventory';
+      await client.query(
+        `INSERT INTO user_inventory
+           (user_id, item_master_id, price_minor, won_at, is_sold, withdraw_state, withdraw_meta)
+         VALUES (
+           $1::bigint,
+           $2::bigint,
+           $3::bigint,
+           NOW(),
+           false,
+           'none',
+           jsonb_build_object(
+             'from_unique', to_jsonb(true),
+             'unique_id',  to_jsonb($4::bigint),
+             'mhn',        to_jsonb($5::text)
+           )
+         )`,
+        [
+          userId,
+          wonItemMasterId,
+          wonPriceMinor,
+          Number(won.id),
+          String(wonMarketHashName)
+        ]
+      );
+
+      stage = 'tx_commit';
+      await client.query('COMMIT');
+
+      return res.json({
+        ok: true,
+        won: {
+          name: wonMarketHashName,
+          image: won.image,
+          price: wonPriceMinor / 100
+        },
+        balance: balance - priceRub
+      });
+    } catch (e2) {
+      try { await client.query('ROLLBACK'); } catch {}
+      console.error('[POST /api/cases/open:tx]', stage, e2);
+      return res.status(500).json(expose(e2, stage));
+    } finally {
+      client.release();
+    }
+  } catch (e) {
+    console.error('[POST /api/cases/open]', stage, e);
+    return res.status(500).json(expose(e, stage));
+  }
+});
+
+/* Блокируем GET /open */
+router.get('/open', (_req, res) => res.status(405).json({ error: 'Method Not Allowed' }));
+
+/* ---------- СПИСОК ---------- */
 router.get('/', async (_req, res) => {
   try {
-    const { rows } = await db.query(
-      'SELECT id, name, image, price FROM cases ORDER BY id'
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const q = await db.query(`
+      SELECT id, slug, title, image, currency, is_active, updated_at,
+             COALESCE(price_rub, price, 0)::numeric(12,2) AS price
+      FROM cases
+      ORDER BY created_at DESC NULLS LAST, id DESC
+    `);
+    res.json(q.rows);
+  } catch (e) {
+    console.error('[GET /api/cases]', e);
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
-// Кейc + предметы; ?live=1 — подтянуть цены со Steam прямо сейчас
-router.get('/:id', async (req, res) => {
+/* ---------- ПРЕДМЕТЫ КЕЙСА ---------- */
+router.get('/:key/items', async (req, res) => {
   try {
-    const caseId = req.params.id;
-    const live = ALWAYS_LIVE || req.query.live === '1';
+    const { key } = req.params;
+    const isNum = /^\d+$/.test(key);
+    const c = isNum
+      ? await db.query(`SELECT id, COALESCE(price_rub, price,0)::numeric(12,2) AS price FROM cases WHERE id=$1`, [Number(key)])
+      : await db.query(`SELECT id, COALESCE(price_rub, price,0)::numeric(12,2) AS price FROM cases WHERE lower(trim(slug))=lower(trim($1))`, [key]);
+    if (!c.rowCount) return res.status(404).json({ error: 'Case not found' });
+    const caseId = c.rows[0].id;
 
-    const caseRes = await db.query(
-      'SELECT id, name, image, price FROM cases WHERE id = $1',
-      [caseId]
+    const itemsQ = await db.query(
+      `SELECT u.id, u.base_name AS name, u.market_hash_name, u.image, u.price_minor
+       FROM case_items ci
+       JOIN items_unique u ON u.id = ci.item_unique_id
+       WHERE ci.case_id = $1
+       ORDER BY u.price_minor DESC`, [caseId]
     );
-    if (!caseRes.rows.length) return res.status(404).json({ error: 'Case not found' });
 
-    let { rows: items } = await db.query(
-      `SELECT id, name, image, price, chance, market_hash_name, price_updated_at
-         FROM case_items
-        WHERE case_id = $1
-        ORDER BY id`,
-      [caseId]
-    );
+    const items = itemsQ.rows
+      .filter(r => {
+        const price = Number(r.price_minor || 0);
+        return price > 0 && price < 1000000000;
+      })
+      .map(r => ({
+        id: r.id,
+        name: r.name || r.market_hash_name,
+        market_hash_name: r.market_hash_name,
+        image: r.image,
+        price_rub: Number(r.price_minor || 0) / 100
+      }));
 
-    if (live) {
-      for (let i = 0; i < items.length; i++) {
-        const it = items[i];
-        if (it.market_hash_name) {
-          try {
-            const newPrice = await repriceItemById(it.id, it.market_hash_name);
-            items[i] = { ...it, price: newPrice, price_updated_at: new Date() };
-          } catch {}
-          await sleep(REQ_DELAY_MS);
-        }
-      }
-    }
-
-    res.json({ ...caseRes.rows[0], items });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json({ case: { id: caseId, price: c.rows[0].price }, items });
+  } catch (e) {
+    console.error('[GET /api/cases/:key/items]', e);
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
-// Открыть кейс — теперь цена результата ВСЕГДА берётся со Steam (если есть market_hash_name)
-router.post('/:id/open', auth, async (req, res) => {
-  const client = await db.pool.connect();
+/* ---------- КЕЙС ---------- */
+router.get('/:key', async (req, res) => {
   try {
-    await client.query('BEGIN');
+    const { key } = req.params;
+    const isNum = /^\d+$/.test(key);
+    const c = isNum
+      ? await db.query(`SELECT id, slug, title, image, currency, is_active, updated_at,
+                               COALESCE(price_rub, price,0)::numeric(12,2) AS price
+                        FROM cases WHERE id=$1`, [Number(key)])
+      : await db.query(`SELECT id, slug, title, image, currency, is_active, updated_at,
+                               COALESCE(price_rub, price,0)::numeric(12,2) AS price
+                        FROM cases WHERE lower(trim(slug))=lower(trim($1))`, [key]);
+    if (!c.rowCount) return res.status(404).json({ error: 'Case not found' });
 
-    const userId = req.user.id;
-    const caseId = req.params.id;
+    const caseId = c.rows[0].id;
 
-    const c = await client.query(
-      'SELECT name, price FROM cases WHERE id = $1 FOR UPDATE',
-      [caseId]
-    );
-    if (!c.rows.length) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'Case not found' });
-    }
-    const { name: caseName, price: casePrice } = c.rows[0];
-
-    const u = await client.query(
-      'SELECT balance FROM users WHERE id = $1 FOR UPDATE',
-      [userId]
-    );
-    if (!u.rows.length) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'User not found' });
-    }
-    const curBalance = Number(u.rows[0].balance);
-    if (curBalance < casePrice) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Insufficient funds' });
-    }
-
-    // При желании — освежим цены в самом кейсе перед выпадением (если включен ALWAYS_LIVE)
-    if (ALWAYS_LIVE) {
-      const list = await client.query(
-        `SELECT id, market_hash_name FROM case_items WHERE case_id = $1`,
-        [caseId]
-      );
-      for (const it of list.rows) {
-        if (it.market_hash_name) {
-          try {
-            const p = await fetchSteamPrice(it.market_hash_name);
-            await client.query(
-              `UPDATE case_items SET price = $1, price_updated_at = NOW() WHERE id = $2`,
-              [p, it.id]
-            );
-          } catch {}
-          await sleep(REQ_DELAY_MS);
-        }
-      }
-    }
-
-    // Берём предметы (с market_hash_name!)
-    const itemsRes = await client.query(
-      `SELECT id, name, image, price, chance, market_hash_name
-         FROM case_items
-        WHERE case_id = $1`,
-      [caseId]
-    );
-    const items = itemsRes.rows;
-    if (!items.length) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Case has no items' });
-    }
-
-    // Списываем деньги
-    const newBalance = Math.round((curBalance - casePrice) * 100) / 100;
-    await client.query('UPDATE users SET balance = $1 WHERE id = $2', [newBalance, userId]);
-
-    // Ролл по шансам
-    let acc = 0;
-    const rand = Math.random() * 100;
-    let selected = items[items.length - 1];
-    for (const it of items) {
-      acc += Number(it.chance);
-      if (rand <= acc) { selected = it; break; }
-    }
-
-    // ****** КЛЮЧЕВОЕ: цена результата из Steam ******
-    let livePrice = Number(selected.price) || 0;
-    if (selected.market_hash_name) {
-      try {
-        livePrice = await fetchSteamPrice(selected.market_hash_name);
-        // можно синхронно обновить сам case_item:
-        await client.query(
-          `UPDATE case_items SET price = $1, price_updated_at = NOW() WHERE id = $2`,
-          [livePrice, selected.id]
-        );
-      } catch {
-        // если Steam не ответил — оставим цену из БД
-      }
-    }
-    livePrice = Math.round(livePrice * 100) / 100;
-
-    // Пишем в инвентарь с актуальной ценой
-    await client.query(
-      `INSERT INTO user_inventory
-         (user_id, case_id, case_name, item_id, name, image, price_current, won_at, is_sold)
-       VALUES ($1,      $2,      $3,        $4,      $5,   $6,    $7,            NOW(),  FALSE)`,
-      [userId, caseId, caseName, selected.id, selected.name, selected.image, livePrice]
+    const itemsQ = await db.query(
+      `SELECT u.id, u.base_name AS name, u.market_hash_name, u.image, u.price_minor
+       FROM case_items ci
+       JOIN items_unique u ON u.id = ci.item_unique_id
+       WHERE ci.case_id = $1
+       ORDER BY u.price_minor DESC`, [caseId]
     );
 
-    // Транзакцию — тоже с актуальной ценой
-    await client.query(
-      `INSERT INTO transactions
-         (user_id, type, amount, item_case_name, item_name, item_image, item_price, created_at)
-       VALUES ($1, 'case_open', $2, $3, $4, $5, $6, NOW())`,
-      [userId, casePrice, caseName, selected.name, selected.image, livePrice]
-    );
+    const items = itemsQ.rows
+      .filter(r => {
+        const price = Number(r.price_minor || 0);
+        return price > 0 && price < 1000000000;
+      })
+      .map(r => ({
+        id: r.id,
+        name: r.name || r.market_hash_name,
+        market_hash_name: r.market_hash_name,
+        image: r.image,
+        price_rub: Number(r.price_minor || 0) / 100
+      }));
 
-    await client.query('COMMIT');
-
-    // Отдаём фронту предмет с корректной ценой
-    res.json({
-      item: {
-        id: selected.id,
-        name: selected.name,
-        image: selected.image,
-        price: livePrice, // ← теперь здесь всегда актуальная цена со Steam
-      },
-      balance: newBalance,
-    });
-  } catch (err) {
-    await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
+    res.json({ ...c.rows[0], items });
+  } catch (e) {
+    console.error('[GET /api/cases/:key]', e);
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 

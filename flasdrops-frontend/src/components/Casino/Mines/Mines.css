@@ -1,0 +1,87 @@
+.mines-page{
+  display:flex;
+  gap:20px;
+  padding:20px;
+  color:#f6d645;
+}
+
+/* ЛЕВО — поле */
+.mines-left{
+  flex: 0 0 auto;
+  margin-top: 40px; /* подними/опусти поле */
+}
+
+.mine-board{
+  display:grid;
+  gap:6px;
+  background:#141414;
+  border:1px solid #2b2b2b;
+  padding:10px;
+  border-radius:12px;
+}
+
+.cell{
+  width:38px;          /* уменьши/увеличь клетку тут */
+  height:38px;
+  border-radius:8px;
+  border:1px solid #2b2b2b;
+  background:#1a1a1a;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition:.12s ease;
+}
+.cell.hidden:hover{ border-color:#ffd000; }
+.cell.revealed{ background:#171717; }
+
+.mine-bomb{
+  font-size:20px;      /* размер бомбы */
+  line-height:1;
+}
+
+.adj{
+  font-weight:800;
+  font-size:14px;
+}
+.adj.zero{ opacity:.35; }
+.adj.n1{ color:#9ae6b4; }
+.adj.n2{ color:#cbd5e1; }
+.adj.n3{ color:#facc15; }
+.adj.n4{ color:#f97316; }
+.adj.n5,.adj.n6,.adj.n7,.adj.n8{ color:#fb7185; }
+
+.cell.boom{
+  background: #3b0a0a;
+  border-color:#7f1d1d;
+}
+
+/* ПРАВО — панель */
+.mines-right{
+  flex: 0 0 360px;
+  margin-top: 40px;
+}
+
+.panel{
+  background:#141414;
+  border:1px solid #2b2b2b;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.ttl{ font-weight:900; font-size:18px; margin-bottom:10px; }
+.row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin:10px 0;
+}
+.row input, .row select{
+  background:#1a1a1a; border:1px solid #2b2b2b; color:#fff; border-radius:8px; padding:8px 10px;
+}
+.split{ display:flex; gap:8px; }
+.btn{ padding:10px 12px; border-radius:10px; border:0; font-weight:800; cursor:pointer; }
+.btn.ghost{ background:#2b2b2b; color:#fff; }
+.btn.primary{ background:#ffd000; color:#111; }
+.muted{ opacity:.75; margin-top:10px; }
+
+.legend{ background:#141414; border:1px solid #2b2b2b; border-radius:12px; padding:10px; }
+.legend .lg.mine{ font-size:18px; margin-right:6px; }
+.legend .lg.safe{ color:#ffea76; margin-right:6px; }

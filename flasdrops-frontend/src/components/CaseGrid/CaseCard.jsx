@@ -1,12 +1,91 @@
-export default function CaseCard({ name, price, image }) {
+import React, { useState } from 'react';
+import './CaseItemCard.css';
+
+const CaseItemCard = ({ item }) => {
+  const [showQualities, setShowQualities] = useState(false);
+  const [qualities, setQualities] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchItemQualities = async (itemName) => {
+    if (!itemName) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/items/${encodeURIComponent(itemName)}/qualities`);
+      const data = await response.json();
+      setQualities(data);
+    } catch (error) {
+      console.error('Error fetching qualities:', error);
+      setQualities([]);
+    }
+    setLoading(false);
+  };
+
+  const handleMouseEnter = () => {
+    const itemName = item.name || item.market_hash_name;
+    if (itemName) {
+      fetchItemQualities(itemName);
+      setShowQualities(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowQualities(false);
+  };
+
   return (
-    <div className="case-card">
-      <div className="case-image">
-        <img src={`/assets/${image}`} alt={name} />
+    <div 
+      className="case-item-card-wrapper"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="case-item-card">
+        <img 
+          src={item.image} 
+          alt={item.name || item.market_hash_name} 
+          className="case-item-card-img" 
+        />
+        <div className="case-item-card-name">
+          {item.name || item.market_hash_name}
+        </div>
       </div>
-      <h4>{name}</h4>
-      <div className="case-price">{price} ₽</div>
-      <button className="open-button">Открыть</button>
+
+      {/* Карточка с ценами по качествам */}
+      {showQualities && (
+        <div className="item-qualities-card">
+          <h4>{item.name || item.market_hash_name}</h4>
+          {loading ? (
+            <div className="loading-text">Загрузка цен...</div>
+          ) : qualities.length > 0 ? (
+            <table className="qualities-table">
+              <thead>
+                <tr>
+                  <th>Качество</th>
+                  <th>Цена</th>
+                  <th>Тип</th>
+                </tr>
+              </thead>
+              <tbody>
+                {qualities.map((quality, index) => (
+                  <tr key={index}>
+                    <td>{quality.wear}</td>
+                    <td>{Math.round(quality.price_rub)} ₽</td>
+                    <td>
+                      {quality.is_stattrak && 'StatTrak™'}
+                      {quality.is_souvenir && 'Souvenir'}
+                      {!quality.is_stattrak && !quality.is_souvenir && 'Обычный'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="no-data">Нет данных о ценах</div>
+          )}
+        </div>
+      )}
     </div>
-  )
-}
+  );
+};
+
+export default CaseItemCard;

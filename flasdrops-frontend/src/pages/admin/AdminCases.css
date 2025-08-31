@@ -1,0 +1,94 @@
+/* ВАЖНО: никаких глобальных селекторов типа body, html, * !
+   Всё под .admin-page, чтобы не ломать общую тему. */
+
+.admin-page {
+  padding: 16px;
+  color: #eee;
+}
+
+.admin-page .panel {
+  background: #141414;
+  border: 1px solid #2b2b2b;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-page .ttl {
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.admin-page .form .row {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-page .input {
+  background: #1a1a1a;
+  border: 1px solid #2b2b2b;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.admin-page .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-page .btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 0;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-page .btn.primary { background: #ffd000; color: #111; }
+.admin-page .btn.danger  { background: #ff3b30; color: #fff; }
+.admin-page .btn.ghost   { background: #2b2b2b; color: #fff; }
+
+.admin-page .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.admin-page .card {
+  background: #1a1a1a;
+  border: 1px solid #2b2b2b;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.admin-page .imgbox {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0e0e0e;
+  border: 1px solid #2b2b2b;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.admin-page .imgbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.admin-page .meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+
+.admin-page .name { font-weight: 700; }
+.admin-page .price { opacity: .9; }
+
+.admin-page .muted { opacity: 0.7; }

@@ -1,0 +1,18 @@
+/* бейдж баланса с иконкой FC (встроим в существующий .user-balance) */
+.user-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* иконка до текста */
+.user-balance::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-image: url('/images/fc.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+}

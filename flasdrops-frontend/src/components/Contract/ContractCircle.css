@@ -1,0 +1,169 @@
+:root{
+  --bg:#0f0f0f;
+  --panel:#141414;
+  --panel-2:#1a1a1a;
+  --border:#2b2b2b;
+  --text:#f6d645;
+  --text-dim:#c7ad3c;
+  --accent:#ffd000;
+  --accent-2:#ffea76;
+
+  /* Настройки размеров */
+  --inv-width: 540px;
+  --inv-gap: 10px;
+  --inv-col-min: 140px;
+  --inv-img-h: 88px;
+
+  --circle-size: 700px;     /* диаметр большого круга */
+  --slot-size: 150px;        /* диаметр маленьких кружков */
+  --center-btn: 250px;      /* диаметр кнопки по центру */
+
+  --page-top-offset: 250px;  /* отступ страницы сверху (если тикер) */
+  --summary-top-gap: 220px;  /* ← РАССТОЯНИЕ МЕЖДУ КРУГОМ И «МЕНЮ» НИЖЕ */
+}
+
+/* Лейаут */
+.contract-circle-page{
+  display:flex;
+  gap:20px;
+  padding:20px;
+  color:var(--text);
+  margin-top: var(--page-top-offset);
+}
+
+/* Инвентарь (слева) */
+.inventory-list{
+  width: var(--inv-width);
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:-80px;
+}
+.inv-head{ display:flex; align-items:center; justify-content:space-between; }
+.inv-count{ color:var(--text-dim); }
+
+.items{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 колонки */
+  gap: var(--inv-gap);
+  max-height: 78vh;
+  overflow:auto;
+  padding-right:4px;
+}
+.item{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  transition:.15s ease;
+  color:#fff;
+}
+.item:hover{ border-color: var(--accent); }
+.item img{
+  max-width:100%;
+  height: var(--inv-img-h);
+  object-fit:contain;
+}
+.item .name{
+  font-size:13px;
+  text-align:center;
+  line-height:1.2;
+  max-height: 3.2em;
+  overflow:hidden;
+}
+.item .price{
+  font-size:12px;
+  color: var(--accent-2);
+}
+.inv-empty{ text-align:center; opacity:.8; padding:20px 8px; }
+
+/* Правая часть */
+.contract-circle-main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* Большой круг */
+.big-circle{
+  position:relative;
+  width: var(--circle-size);
+  height: var(--circle-size);
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(255,208,0,0.05), transparent);
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  margin-bottom: var(--summary-top-gap); /* ← опускаем «меню» ниже */
+}
+
+/* Маленькие слоты */
+.slot{
+  position:absolute;
+  top:50%; left:50%;
+  width: var(--slot-size);
+  height: var(--slot-size);
+  margin: calc(var(--slot-size) / -2) 0 0 calc(var(--slot-size) / -2);
+  border-radius:50%;
+  background: var(--panel-2);
+  border: 2px dashed var(--accent);
+  display:grid; place-items:center;
+  color: var(--text-dim);
+  user-select:none;
+  cursor:pointer;
+  transition: .15s;
+}
+.slot.filled{
+  border-style:solid;
+  background: linear-gradient(180deg, rgba(255,208,0,0.08), rgba(255,208,0,0.03));
+}
+.slot:hover{ border-color: var(--accent-2); }
+.slot img{
+  max-width: 80%;
+  max-height: 80%;
+  object-fit:contain;
+  border-radius:50%;
+}
+.slot .plus{ font-size: 22px; }
+
+/* Кнопка по центру */
+.contract-btn{
+  position:absolute;
+  width: var(--center-btn);
+  height: var(--center-btn);
+  border-radius:50%;
+  border:none;
+  background: var(--accent);
+  color:#121212;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow: 0 0 24px rgba(255,208,0,0.25);
+}
+.contract-btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* Итоги (меню) */
+.summary{
+  width:100%;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap:10px;
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+}
+.summary-actions{ display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+.btn{ padding:10px 14px; border-radius:12px; border:0; font-weight:700; cursor:pointer; }
+.btn.ghost{ background:#2b2b2b; color:#fff; }

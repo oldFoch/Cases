@@ -1,25 +1,35 @@
 {
   "name": "flashdrops-backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "private": true,
   "type": "commonjs",
+  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
     "dev": "nodemon server.js",
+    "start": "node server.js",
+    "sync": "node scripts/syncItems.js",
     "prices:update": "node scripts/updatePrices.js",
     "price:update:one": "node scripts/updateOnePrice.js",
-    "prices:bot:update": "node scripts/updateBotInventoryPrices.js"
+    "bot:2fa:start": "node scripts/bot-2fa-start.js --bot-id",
+    "bot:2fa:finalize": "node scripts/bot-2fa-finalize.js --bot-id"
   },
   "dependencies": {
+    "axios": "^1.11.0",
+    "connect-pg-simple": "^10.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "express-session": "^1.18.2",
-    "helmet": "^8.1.0",
     "node-cron": "^3.0.3",
     "passport": "^0.7.0",
     "passport-steam": "^1.0.18",
-    "pg": "^8.16.3"
+    "pg": "^8.12.0",
+    "steam-totp": "^2.1.2",
+    "steam-tradeoffer-manager": "^2.10.6",
+    "steam-user": "^5.0.6",
+    "steamcommunity": "^3.47.3",
+    "undici": "^7.14.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

@@ -1,88 +1,108 @@
 // flashdrops-backend/src/services/priceService.js
-// Тянет цену со Steam Market (median/lowest), умеет парсить любой формат цены,
-// пробует несколько валют (ENV → USD → EUR → RUB), применяет ваш минус-% и возвращает число.
+'use strict';
 
-const STEAM_APPID = Number(process.env.STEAM_APPID || 730);
-const PRIMARY_CURRENCY = Number(process.env.STEAM_CURRENCY || 5); // 5=RUB, 1=USD, 3=EUR
-const PRICE_MARGIN_PERCENT = Number(process.env.PRICE_MARGIN_PERCENT || 5);
+/**
+ * Получение цены со Steam Market:
+ * 1) пробуем RUB (5)
+ * 2) если пусто — USD (1) → конвертим в RUB
+ * 3) если пусто — EUR (3) → конвертим в RUB
+ * Всегда возвращаем РУБЛИ с вычетом маржи.
+ */
 
-// порядок попыток валют (ENV → USD → EUR → RUB), без дублей
-const CURRENCY_CHAIN = [PRIMARY_CURRENCY, 1, 3, 5].filter(
-  (v, i, a) => a.indexOf(v) === i
-);
+const axios = require('axios');
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+const APPID = Number(process.env.STEAM_APPID || 730);
+const MARGIN = Number(process.env.PRICE_MARGIN_PERCENT || 0);
 
-// Нормализуем строку цены в число (поддержка "1 234,56 ₽", "1,234.56", "1234.56", и т.п.)
-function parsePrice(raw) {
-  if (!raw) return null;
-  let s = String(raw).replace(/[^\d.,\s]/g, '').trim(); // выкинуть символы валюты
-  s = s.replace(/\s+/g, ''); // убрать пробелы тысяч
-  const lastComma = s.lastIndexOf(',');
-  const lastDot   = s.lastIndexOf('.');
-  if (lastComma > lastDot) {
-    // формат "1.234,56" → "1234.56"
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else {
-    // формат "1,234.56" или "1234.56" → "1234.56"
-    s = s.replace(/,/g, '');
-  }
-  const num = Number(s);
-  return Number.isFinite(num) ? Math.round(num * 100) / 100 : null;
+const FETCH_TIMEOUT = Number(process.env.PRICE_FETCH_TIMEOUT_MS || 2000);
+const FETCH_RETRIES = Number(process.env.PRICE_FETCH_RETRIES || 0);
+const FETCH_COOLDOWN_MS = Number(process.env.PRICE_FETCH_COOLDOWN_MS || 200);
+
+// FX fallback (обязательно выстави в .env)
+const FX_USD_RUB = Number(process.env.FX_USD_RUB || 95);
+const FX_EUR_RUB = Number(process.env.FX_EUR_RUB || 103);
+
+// Cookies для региона (желательно)
+const STEAM_SESSIONID = process.env.STEAM_SESSIONID || '';
+const STEAM_COUNTRY = process.env.STEAM_COUNTRY || ''; // пример: RU%7C<hash> или DE%7C<hash>
+
+const CURRENCIES = [
+  { id: 5,  mulToRub: 1,                name: 'RUB' },
+  { id: 1,  mulToRub: Number(FX_USD_RUB) || 95,  name: 'USD' },
+  { id: 3,  mulToRub: Number(FX_EUR_RUB) || 103, name: 'EUR' },
+];
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+function buildHeaders() {
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (compatible; FlashDropsBot/1.0)',
+    'Accept': 'application/json, text/javascript,*/*;q=0.1',
+  };
+  const cookies = [];
+  if (STEAM_SESSIONID) cookies.push(`sessionid=${STEAM_SESSIONID}`);
+  if (STEAM_COUNTRY)   cookies.push(`steamCountry=${STEAM_COUNTRY}`);
+  if (cookies.length) headers['Cookie'] = cookies.join('; ');
+  return headers;
 }
 
-async function fetchPriceOverview(marketHashName, currency) {
-  const url = `https://steamcommunity.com/market/priceoverview/?currency=${currency}` +
-              `&appid=${STEAM_APPID}&market_hash_name=${encodeURIComponent(marketHashName)}`;
-
-  const resp = await fetch(url, {
-    method: 'GET',
-    headers: { 'User-Agent': 'FlashDropsBot/1.0 (+priceService)' }
-  });
-
-  const text = await resp.text();
-  let data = null;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    // иногда Steam отдаёт HTML (rate-limit/капча) — считаем это неуспехом
-    throw new Error(`Steam non-JSON response (currency=${currency})`);
-  }
-
-  if (!data || data.success === false) {
-    throw new Error(`Steam success=false (currency=${currency})`);
-  }
-
-  const raw = data.median_price || data.lowest_price || data.volume; // volume как последний шанс
-  const price = parsePrice(raw);
-  if (price == null) {
-    throw new Error(`price parse failed (currency=${currency}, raw=${raw})`);
-  }
-
-  // применяем ваш минус-% (скидку)
-  const adjusted = Math.max(0, price * (1 - (PRICE_MARGIN_PERCENT / 100)));
-  return Number(adjusted.toFixed(2));
+function parsePriceNumber(str) {
+  if (!str) return null;
+  const cleaned = String(str)
+    .replace(/\s+/g, '')
+    .replace(/[^\d,.\-]/g, '')
+    .replace(',', '.');
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
 }
 
-// Публичная функция: получить цену с фолбэком по валютам и лёгким ретраем
-async function getPriceWithCache(marketHashName) {
-  let lastErr = null;
+function applyMarginRub(rub) {
+  const p = Number(rub) || 0;
+  const m = Number(MARGIN) || 0;
+  const withMargin = p * (1 - m / 100);
+  return Math.round(withMargin * 100) / 100;
+}
 
-  for (const cur of CURRENCY_CHAIN) {
-    // до 2 попыток на валюту — на случай редкого rate-limit
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const price = await fetchPriceOverview(marketHashName, cur);
-        return price;
-      } catch (e) {
-        lastErr = e;
-        // маленький экспоненциальный бэкофф
-        await sleep(attempt * 400);
-      }
+async function fetchOne(marketHashName, currencyId) {
+  const url = `https://steamcommunity.com/market/priceoverview/` +
+              `?appid=${APPID}&currency=${currencyId}&market_hash_name=${encodeURIComponent(marketHashName)}`;
+
+  let lastErr;
+  for (let i = 0; i <= FETCH_RETRIES; i++) {
+    try {
+      const { data } = await axios.get(url, { timeout: FETCH_TIMEOUT, headers: buildHeaders() });
+      if (!data || data.success !== true) throw new Error('bad-status');
+
+      const s = data.lowest_price || data.median_price;
+      const num = parsePriceNumber(s);
+      if (num == null || num <= 0) throw new Error('no-price');
+
+      if (FETCH_COOLDOWN_MS > 0) await sleep(FETCH_COOLDOWN_MS);
+      return num; // число в валюте currencyId
+    } catch (e) {
+      lastErr = e;
+      if (FETCH_COOLDOWN_MS > 0) await sleep(FETCH_COOLDOWN_MS);
     }
   }
-
-  throw new Error(`Steam price not found for "${marketHashName}": ${lastErr?.message || 'unknown'}`);
+  throw lastErr || new Error('fetch-failed');
 }
 
-module.exports = { getPriceWithCache };
+/**
+ * Главная функция: всегда возвращает цену в РУБЛЯХ (с маржей).
+ */
+async function fetchSteamPrice(marketHashName) {
+  let lastErr;
+  for (const cur of CURRENCIES) {
+    try {
+      const numInCurrency = await fetchOne(marketHashName, cur.id);
+      const inRub = Math.round(numInCurrency * cur.mulToRub * 100) / 100;
+      return applyMarginRub(inRub);
+    } catch (e) {
+      lastErr = e;
+      // пробуем следующую валюту
+    }
+  }
+  throw lastErr || new Error('no-price');
+}
+
+module.exports = { fetchSteamPrice };

@@ -2,133 +2,192 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CaseDetails.css';
+import PriceFC from '../PriceFC.jsx';
 
 export default function CaseDetails() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
 
   const [caseData, setCaseData] = useState(null);
   const [opening, setOpening] = useState(false);
   const [result, setResult] = useState(null);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [itemQualities, setItemQualities] = useState({});
+  const [loadingQualities, setLoadingQualities] = useState({});
+  const [userBalance, setUserBalance] = useState(0);
 
-  // ---- Reel state ----
-  const [stage, setStage] = useState('idle'); // idle | spinning | done
+  const [stage, setStage] = useState('idle'); // idle, spinning, done
   const windowRef = useRef(null);
-  const reelRef = useRef(null);
+  const stripRef = useRef(null);
   const [reel, setReel] = useState([]);
   const [targetIndex, setTargetIndex] = useState(null);
 
-  // Синхронизировано с CSS (.reel-card width и gap)
-  const CARD_W = 180;
-  const CARD_GAP = 16;
-  const STEP = CARD_W + CARD_GAP;
+  const ITEM_WIDTH = 180;
+  const ITEM_GAP = 20;
+  const STEP = ITEM_WIDTH + ITEM_GAP;
 
+  // Загрузка данных кейса
   useEffect(() => {
+    let alive = true;
     axios
-      .get(`/api/cases/${id}?live`, { withCredentials: true })
-      .then(res => setCaseData(res.data))
-      .catch(() => setCaseData(null));
-  }, [id]);
+      .get(`/api/cases/${encodeURIComponent(slug)}`, { withCredentials: true })
+      .then(res => { 
+        if (alive) setCaseData(res.data); 
+      })
+      .catch(() => { 
+        if (alive) setCaseData(null); 
+      });
+    
+    // Загрузка баланса пользователя
+    axios
+      .get('/api/user/balance', { withCredentials: true })
+      .then(res => {
+        if (alive && res.data?.balance) {
+          setUserBalance(res.data.balance);
+        }
+      })
+      .catch(() => {});
+
+    return () => { alive = false; };
+  }, [slug]);
 
   const items = useMemo(() => caseData?.items ?? [], [caseData]);
 
-  const buildReel = (baseItems, length = 140) => {
+  // Функция для получения цен по качествам
+  const fetchItemQualities = async (itemName, itemId) => {
+    if (!itemName) return;
+    
+    setLoadingQualities(prev => ({ ...prev, [itemId]: true }));
+    try {
+      const response = await fetch(`/api/items/${encodeURIComponent(itemName)}/qualities`);
+      const data = await response.json();
+      setItemQualities(prev => ({ ...prev, [itemId]: data }));
+    } catch (error) {
+      console.error('Error fetching qualities:', error);
+      setItemQualities(prev => ({ ...prev, [itemId]: [] }));
+    }
+    setLoadingQualities(prev => ({ ...prev, [itemId]: false }));
+  };
+
+  const handleItemMouseEnter = (item, index) => {
+    const itemName = item.name || item.market_hash_name;
+    const itemId = item.id || index;
+    setHoveredItem(itemId);
+    if (!itemQualities[itemId]) {
+      fetchItemQualities(itemName, itemId);
+    }
+  };
+
+  const handleItemMouseLeave = () => {
+    setHoveredItem(null);
+  };
+
+  // Создание рулетки
+  const buildReel = (baseItems, length = 100) => {
     const arr = [];
     const src = [...baseItems];
+    
+    // Перемешиваем
     for (let i = src.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [src[i], src[j]] = [src[j], src[i]];
     }
+    
+    // Заполняем массив
     while (arr.length < length) {
       for (let i = 0; i < src.length && arr.length < length; i++) {
         arr.push(src[i]);
       }
     }
+    
     return arr;
   };
 
-  // Предпросмотр ленты до старта
-  useEffect(() => {
-    if (!items.length || stage !== 'idle') return;
-    setReel(buildReel(items, 140));
-  }, [items, stage]);
+  // Обновление баланса
+  const updateBalance = (newBalance) => {
+    if (typeof newBalance === 'number') {
+      setUserBalance(newBalance);
+      window.dispatchEvent(new CustomEvent('balance:update', { detail: newBalance }));
+    }
+  };
 
-  // Центровка ленты на середину (idle)
-  useEffect(() => {
-    if (stage !== 'idle' || !reel.length) return;
-    const win = windowRef.current;
-    const strip = reelRef.current;
-    if (!win || !strip) return;
-
-    const centerX = win.clientWidth / 2;
-    const midIndex = Math.floor(reel.length / 2);
-    const targetPixel = midIndex * STEP + CARD_W / 2;
-    const translate = -(targetPixel - centerX);
-
-    strip.style.transition = 'none';
-    strip.style.transform = `translateX(${translate}px) translateY(-50%)`;
-  }, [reel, stage]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // Обработка открытия кейса
   const handleSpin = async () => {
-    if (opening || !items.length) return;
+    if (opening || !items.length || !caseData?.id) return;
+
     setOpening(true);
     setResult(null);
 
-    const freshReel = buildReel(items, 140);
+    const freshReel = buildReel(items, 100);
     setReel(freshReel);
     setStage('spinning');
 
     try {
       const { data } = await axios.post(
-        `/api/cases/${id}/open`,
-        {},
-        { withCredentials: true }
+        `/api/cases/open`,
+        { case_id: Number(caseData.id) },
+        { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
       );
 
-      const drop = data.item;
+      const drop = data.won
+        ? { name: data.won.name, image: data.won.image, price_rub: data.won.price }
+        : (data.item || null);
+
+      if (data.balance != null) updateBalance(data.balance);
+      if (!drop) throw new Error('Bad response');
+
       setResult(drop);
 
-      const safeStart = 30;
-      const safeEnd = freshReel.length - 20;
-      const tIndex = Math.max(safeStart, Math.min(safeEnd, Math.floor(freshReel.length * 0.75)));
-      freshReel[tIndex] = { ...drop, __forced: true };
+      // Устанавливаем выигрышный предмет в нужную позицию
+      const targetIdx = Math.floor(freshReel.length * 0.75);
+      freshReel[targetIdx] = { ...drop, __won: true };
       setReel([...freshReel]);
-      setTargetIndex(tIndex);
+      setTargetIndex(targetIdx);
 
-      requestAnimationFrame(() => {
+      // Анимация прокрутки
+      setTimeout(() => {
         const win = windowRef.current;
-        const strip = reelRef.current;
+        const strip = stripRef.current;
         if (!win || !strip) return;
 
-        const centerX = win.clientWidth / 2;
-        const targetPixel = tIndex * STEP + CARD_W / 2;
-        const translate = -(targetPixel - centerX);
+        const windowWidth = win.clientWidth;
+        const centerX = windowWidth / 2;
+        const targetPixel = targetIdx * STEP + (ITEM_WIDTH / 2);
+        const finalOffset = centerX - targetPixel;
 
         strip.style.transition = 'none';
-        strip.style.transform = `translateX(0px) translateY(-50%)`;
+        strip.style.transform = `translateX(0px)`;
 
-        requestAnimationFrame(() => {
-          const duration = 4200 + Math.floor(Math.random() * 800);
-          strip.style.transition = `transform ${duration}ms cubic-bezier(0.08, 0.8, 0.25, 1)`;
-          strip.style.transform = `translateX(${translate}px) translateY(-50%)`;
-        });
-      });
+        setTimeout(() => {
+          const duration = 4000 + Math.floor(Math.random() * 1000);
+          strip.style.transition = `transform ${duration}ms cubic-bezier(0.17, 0.67, 0.12, 0.99)`;
+          strip.style.transform = `translateX(${finalOffset}px)`;
+        }, 50);
+      }, 100);
     } catch (e) {
       alert(e?.response?.data?.error || 'Ошибка открытия кейса');
       setStage('idle');
-    } finally {
       setOpening(false);
     }
   };
 
-  const onReelTransitionEnd = () => {
-    if (stage === 'spinning') setStage('done');
+  // Обработка завершения анимации
+  const onTransitionEnd = () => {
+    if (stage === 'spinning') {
+      setStage('done');
+      setOpening(false);
+    }
   };
 
-  const handleSell = () => {
-    navigate('/profile');
+  // Действия с результатом
+  const handleSell = () => { 
+    navigate('/profile'); 
   };
-
+  
+  const handleUpgrade = () => { 
+    navigate('/upgrade'); 
+  };
+  
   const handleSpinAgain = () => {
     setStage('idle');
     setResult(null);
@@ -136,76 +195,263 @@ export default function CaseDetails() {
     setTargetIndex(null);
   };
 
-  if (!caseData) return <div className="loading">Загрузка…</div>;
+  // Быстрое открытие
+  const handleQuickOpen = () => {
+    // Логика быстрого открытия без анимации
+    console.log('Quick open');
+  };
+
+  // Определение редкости предмета по его атрибутам или цене
+  const getItemRarity = (item) => {
+    // Проверяем наличие поля rarity в предмете
+    if (item.rarity) {
+      const rarityMap = {
+        'covert': 'red',
+        'classified': 'pink',
+        'restricted': 'purple',
+        'mil-spec': 'blue',
+        'milspec': 'blue',
+        'industrial': 'lightblue',
+        'consumer': 'gray',
+        'rare': 'gold',
+        'contraband': 'yellow',
+        'extraordinary': 'gold',
+        'knife': 'gold',
+        'gloves': 'gold'
+      };
+      
+      const rarity = item.rarity.toLowerCase().replace(/[-_\s]/g, '');
+      return rarityMap[rarity] || 'blue';
+    }
+    
+    // Проверяем, является ли предмет ножом или перчатками
+    const itemName = (item.name || item.market_hash_name || '').toLowerCase();
+    if (itemName.includes('★') || itemName.includes('knife') || itemName.includes('нож') || 
+        itemName.includes('karambit') || itemName.includes('bayonet') || itemName.includes('перчатки') ||
+        itemName.includes('gloves') || itemName.includes('butterfly') || itemName.includes('falchion')) {
+      return 'gold';
+    }
+    
+    // Определяем по цене, если нет других данных
+    const price = item.price_rub ?? item.price ?? 0;
+    if (price > 50000) return 'gold';
+    if (price > 20000) return 'red';
+    if (price > 10000) return 'pink';
+    if (price > 5000) return 'purple';
+    if (price > 1000) return 'blue';
+    if (price > 100) return 'lightblue';
+    return 'gray';
+  };
+
+  // Расчет шанса выпадения
+  const calculateChance = (itemPrice) => {
+    const totalValue = items.reduce((sum, item) => sum + (item.price_rub ?? item.price ?? 0), 0);
+    const chance = (itemPrice / totalValue) * 100;
+    return chance < 0.01 ? '< 0.01%' : `${chance.toFixed(3)}%`;
+  };
+
+  if (!caseData) {
+    return (
+      <div className="case-details-container">
+        <div style={{ textAlign: 'center', padding: '100px 20px', color: '#666' }}>
+          Загрузка...
+        </div>
+      </div>
+    );
+  }
+
+  const casePrice = caseData.price_rub ?? caseData.price ?? 0;
 
   return (
-    <div className="case-details">
-      <h2 className="case-title">{caseData.name}</h2>
-
-      {/* Зона рулетки */}
-      <div className={`spin-area ${stage}`}>
-        <div className="reel-window" ref={windowRef}>
-          <div
-            className="reel-strip"
-            ref={reelRef}
-            onTransitionEnd={onReelTransitionEnd}
-          >
-            {reel.map((it, idx) => (
-              <div className="reel-card" key={`${it.name}-${idx}`}>
-                <img src={it.image} alt={it.name} />
-                <div className="reel-card-name">{it.name}</div>
-              </div>
-            ))}
-          </div>
-          <div className="center-marker" />
-        </div>
-
-        {/* Лого кейса поверх ленты — больше и может выходить за рамки */}
-        <div className="case-cover" aria-hidden>
-          <img className="case-banner-img" src={caseData.image} alt={caseData.name} />
-        </div>
-      </div>
-
-      {/* Кнопка и цена ниже ленты */}
-      <div className="open-controls">
-        <div className="case-price-tag">{Number(caseData.price).toFixed(2)}₽</div>
-        <button
-          className="open-btn"
-          onClick={handleSpin}
-          disabled={opening || stage === 'spinning'}
-        >
-          {opening || stage === 'spinning' ? 'Крутим…' : 'Крутить'}
+    <div className="case-details-container">
+      {/* Шапка */}
+      <div className="case-header">
+        <button className="back-button" onClick={() => navigate('/')}>
+          ← Назад
         </button>
+        <h1 className="case-title">{caseData.name || caseData.title}</h1>
       </div>
 
-      {stage === 'done' && result && (
-        <div className="result-actions">
-          <div className="result-card">
-            <img src={result.image} alt={result.name} />
-            <div className="result-info">
-              <div className="result-name">{result.name}</div>
-              <div className="result-price">{result.price}₽</div>
+      {/* Секция открытия кейса */}
+      <div className="case-opening-section">
+        <div className={`case-visual-container ${stage}`}>
+          {/* Баннер кейса (показывается только в idle) */}
+          {stage === 'idle' && (
+            <div className="case-banner">
+              <img 
+                className="case-banner-image" 
+                src={caseData.image} 
+                alt={caseData.name || caseData.title} 
+              />
             </div>
-          </div>
+          )}
 
-          <div className="result-buttons">
-            <button className="sell-btn2" onClick={handleSell}>
-              Продать
+          {/* Рулетка (показывается при spinning и done) */}
+          {(stage === 'spinning' || stage === 'done') && (
+            <div className="roulette-container">
+              <div className="roulette-window" ref={windowRef}>
+                <div className="roulette-mask-left" />
+                <div className="roulette-mask-right" />
+                <div className="roulette-center-line" />
+                
+                <div 
+                  className="roulette-strip" 
+                  ref={stripRef}
+                  onTransitionEnd={onTransitionEnd}
+                >
+                  {reel.map((item, idx) => (
+                    <div 
+                      key={`${item.id || item.name}-${idx}`}
+                      className="roulette-item-card"
+                    >
+                      <img 
+                        className="roulette-item-image" 
+                        src={item.image} 
+                        alt={item.name || item.market_hash_name} 
+                      />
+                      <div className="roulette-item-name">
+                        {item.name || item.market_hash_name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Контролы открытия */}
+        {stage === 'idle' && (
+          <div className="open-controls">
+            <button
+              className="open-button"
+              onClick={handleSpin}
+              disabled={opening}
+            >
+              {opening ? 'Открываем...' : `Открыть за ${casePrice} ₽`}
+            </button>
+            
+            <button className="quick-open-button" onClick={handleQuickOpen}>
+              Быстрое открытие
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="items-list">
-        {items.map((item) => (
-          <div key={item.id || item.name} className="roulette-item">
-            <img src={item.image} alt={item.name} className="item-image" />
-            <div className="item-info">
-              <span className="item-name">{item.name}</span>
-              <span className="item-price">{item.price}₽</span>
+        {/* Результат */}
+        {stage === 'done' && result && (
+          <div className="result-section">
+            <div className={`result-card result-card-${getItemRarity(result)}`}>
+              <img 
+                className="result-image" 
+                src={result.image} 
+                alt={result.name || result.market_hash_name} 
+              />
+              <div className="result-name">
+                {result.name || result.market_hash_name}
+              </div>
+              <div className="result-price">
+                <PriceFC value={result.price_rub ?? result.price} />
+              </div>
+            </div>
+
+            <div className="result-actions">
+              <button className="sell-button" onClick={handleSell}>
+                Продать
+              </button>
+              <button className="upgrade-button" onClick={handleUpgrade}>
+                Апгрейд
+              </button>
+              <button className="spin-again-button" onClick={handleSpinAgain}>
+                Ещё раз
+              </button>
             </div>
           </div>
-        ))}
+        )}
+      </div>
+
+      {/* Содержимое кейса */}
+      <div className="case-contents">
+        <h2 className="contents-header">Содержимое кейса</h2>
+        
+        <div className="items-grid">
+          {items.map((item, idx) => {
+            const itemId = item.id || idx;
+            const itemPrice = item.price_rub ?? item.price ?? 0;
+            const rarity = getItemRarity(item);
+            const qualities = itemQualities[itemId] || [];
+            const loading = loadingQualities[itemId];
+            
+            return (
+              <div 
+                key={itemId}
+                className="item-card"
+                onMouseEnter={() => handleItemMouseEnter(item, itemId)}
+                onMouseLeave={handleItemMouseLeave}
+              >
+                <div className={`item-rarity-indicator item-rarity-${rarity}`} />
+                
+                <div className="item-content">
+                  <div className="item-image-container">
+                    <img 
+                      className="item-image" 
+                      src={item.image} 
+                      alt={item.name || item.market_hash_name} 
+                    />
+                    <div className="item-chance">
+                      {calculateChance(itemPrice)}
+                    </div>
+                  </div>
+                  
+                  <div className="item-details">
+                    <div className="item-name">
+                      {item.name || item.market_hash_name}
+                    </div>
+                    <div className="item-price">
+                      <PriceFC value={itemPrice} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Секция качеств внутри карточки */}
+                <div className="item-qualities-section">
+                  <div className="qualities-content">
+                    <div className="qualities-header">
+                      <span>Качества</span>
+                    </div>
+                    {loading ? (
+                      <div className="qualities-loading">
+                        Загрузка...
+                      </div>
+                    ) : qualities.length > 0 ? (
+                      <div className="qualities-list">
+                        {qualities.map((quality, qIdx) => (
+                          <div key={qIdx} className="quality-item">
+                            <span className="quality-label">{quality.wear}</span>
+                            <div className="quality-value">
+                              <span className="quality-value-price">
+                                {Math.round(quality.price_rub)} ₽
+                              </span>
+                              {quality.is_stattrak && (
+                                <span className="quality-badge">ST</span>
+                              )}
+                              {quality.is_souvenir && (
+                                <span className="quality-badge">SV</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="qualities-empty">
+                        Нет данных
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,209 @@
+:root{
+  --panel:#141414;
+  --panel2:#1a1a1a;
+  --border:#2b2b2b;
+  --text:#f6d645;
+  --text-d:#c7ad3c;
+  --accent:#ffd000;
+  --accent2:#ffea76;
+
+  /* размеры сцены */
+  --ring-size: 1100px;       /* диаметр большого круга */
+  --center-size: 500px;     /* диаметр центрального круга (ваш предмет) */
+  --ring-gap: 16px;         /* зазор между краем центра и начинающейся рулеткой */
+  --ring-radius: calc((var(--ring-size) - var(--center-size)) / 2 - var(--ring-gap));
+}
+
+.upgrade-page{
+  display:flex;
+  gap:16px;
+  padding:16px;
+  color:#fff;
+}
+
+/* Левая часть — сцена с рулеткой */
+.up-left{
+  flex: 1.2;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.wheel-stage{
+  position:relative;
+  width: var(--ring-size);
+  height: var(--ring-size);
+  margin: 0 auto;
+}
+
+/* Указатель (фикс на вершине) */
+.pointer{
+  position:absolute;
+  left:50%;
+  top:-8px;
+  width:0; height:0;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right:10px solid transparent;
+  border-bottom:14px solid var(--accent);
+  z-index:3;
+}
+
+/* Большое кольцо: вращается целиком */
+.ring{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(255,208,0,0.04), transparent 65%);
+  border:1px solid var(--border);
+  z-index:1;
+}
+
+/* Ячейки на окружности (21) — маленькие круги */
+.ring-slot{
+  position:absolute;
+  left:50%; top:50%;
+  transform-origin: center center;
+  width: 74px;
+  height: 74px;
+  margin: -37px 0 0 -37px;
+  border-radius:50%;
+  display:grid; place-items:center;
+  border:2px dashed #3a3a3a;
+  background:#111;
+  color:#ddd;
+  user-select:none;
+}
+.ring-slot img{
+  max-width: 82%;
+  max-height: 82%;
+  object-fit:contain;
+  border-radius: 50%;
+  background:#0c0c0c;
+  border:1px solid #222;
+}
+.ring-slot .ico{ font-size: 22px; }
+.ring-slot.win  { border-color:#3b3b3b; box-shadow: 0 0 0 2px rgba(255,208,0,0.15) inset; }
+.ring-slot.stay { border-color:#3b3b3b; }
+.ring-slot.lose { border-color:#3b3b3b; filter: saturate(0.8); }
+
+/* Центральный круг — ваш предмет */
+.center-chooser{
+  position:absolute;
+  inset:0;
+  width: var(--center-size);
+  height: var(--center-size);
+  left:50%; top:50%;
+  transform: translate(-50%,-50%);
+  z-index: 2;
+  border-radius: 50%;
+  border:1px solid var(--border);
+  background: radial-gradient(circle, rgba(255,208,0,0.06), rgba(0,0,0,0));
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  cursor:pointer;
+}
+.center-chooser img{
+  width: calc(var(--center-size) * 0.5);
+  height: calc(var(--center-size) * 0.5);
+  object-fit:contain;
+  background:#0f0f0f;
+  border:1px solid var(--border);
+  border-radius:50%;
+}
+.center-chooser .c-name{
+  margin-top:6px; font-size:13px; text-align:center;
+  padding:0 8px; line-height:1.2; max-height:2.6em; overflow:hidden;
+}
+.center-chooser .c-price{ color:var(--accent2); font-weight:900; }
+.center-chooser .c-placeholder{ color:#bbb; font-weight:900; }
+
+/* Нижняя панель */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+}
+.spin-bar{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.spin-status .muted{ opacity:.7; }
+
+.btn{ padding:10px 14px; border-radius:12px; border:0; font-weight:900; cursor:pointer; }
+.btn.primary{ background:var(--accent); color:#121212; }
+.btn.ghost{ background:#2b2b2b; color:#fff; }
+.btn.full{ width:100%; }
+.btn.big{ padding:14px 16px; font-size:16px; }
+
+/* Результат */
+.result{
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+}
+.result .r-title{ font-weight:900; color:var(--text); margin-bottom:8px; }
+.result .r-row{ display:flex; gap:10px; align-items:center; }
+.result img{ width:76px; height:76px; object-fit:contain; background:#101010; border:1px solid var(--border); border-radius:10px; }
+.result .r-name{ font-size:14px; }
+.result .r-price{ font-weight:900; color:var(--accent2); }
+
+/* Правая — БОЛЬШАЯ панель выбора цели */
+.up-right{ flex: 1.0; }
+.big-target .title{ font-weight:900; color:var(--text); }
+.big-target .sub{ color:var(--text-d); font-size:13px; margin:4px 0 10px; }
+
+.target-card.big{
+  display:flex; gap:14px; align-items:center;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.target-card.big img{
+  width:100px; height:100px; object-fit:contain; background:#101010; border:1px solid var(--border); border-radius:12px;
+}
+.tc-info{ flex:1; }
+.tc-name{ font-size:15px; }
+.tc-price{ color:var(--accent2); font-weight:900; margin-top:2px; }
+.tc-actions{ display:flex; gap:8px; margin-top:8px; }
+
+.filters{ display:flex; gap:8px; align-items:center; margin:10px 0; }
+.input{
+  background:#111; color:#fff; border:1px solid var(--border); border-radius:10px; padding:8px 10px;
+}
+.input.short{ width:120px; }
+
+.grid.picks{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap:10px;
+}
+.card{
+  background:#1a1a1a; border:1px solid var(--border); border-radius:12px;
+  padding:8px; color:#fff; text-align:left; display:grid; gap:6px; cursor:pointer; transition:.15s ease;
+}
+.card:hover{ border-color: var(--accent); }
+.imgbox{ width:100%; height:150px; display:grid; place-items:center; background:#101010; border:1px solid var(--border); border-radius:10px; }
+.imgbox img{ max-width:90%; max-height:90%; object-fit:contain; }
+.name{ font-size:13px; line-height:1.2; height:2.6em; overflow:hidden; }
+.price{ color:var(--accent2); font-weight:900; text-align:right; }
+.center{ text-align:center; }
+
+/* Модалка */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,0.6);
+  display:grid; place-items:center; z-index:50;
+}
+.modal{
+  width:min(100%, 980px);
+  max-height: 80vh;
+  background:#121212; border:1px solid var(--border); border-radius:14px; overflow:hidden;
+}
+.modal-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px; background:#161616; border-bottom:1px solid var(--border);
+}
+.modal-title{ font-weight:900; color:var(--text); }
+.modal-body{ padding:10px; }

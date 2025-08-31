@@ -1,0 +1,66 @@
+.dice-page{
+  display:flex; justify-content:center; color:#f6d645; padding:0 16px;
+}
+.dice-card{
+  width:min(1100px, 100%);
+  background:#141414; border:1px solid #2b2b2b; border-radius:14px;
+  padding:16px; display:grid; gap:16px;
+}
+
+/* ===== Сцена: полоса + шарик ===== */
+.track-stage{
+  background:#0f0f0f; border:1px solid #2b2b2b; border-radius:12px;
+  padding:16px; display:grid; gap:8px;
+}
+.track{
+  position:relative; height:46px; border:1px solid #2b2b2b; border-radius:999px;
+  background:linear-gradient(180deg, rgba(255,208,0,0.06), rgba(255,208,0,0.02));
+  overflow:hidden;
+}
+.track-win{
+  position:absolute; top:0; height:100%;
+  background:linear-gradient(90deg, rgba(42,168,255,0.25), rgba(42,168,255,0.15));
+  pointer-events:none;
+}
+.tick{
+  position:absolute; top:0; height:100%; width:1px; background:#2b2b2b; pointer-events:none;
+}
+.track-labels{
+  display:flex; justify-content:space-between; font-size:12px; color:#c7ad3c; padding:0 6px;
+}
+
+/* шарик — X и ROT приходят через CSS-переменные */
+.ball{
+  --ball-ms: 1200ms;
+  position:absolute; top:50%; left:0;
+  width:32px; height:32px; border-radius:50%;
+  background:#ffd000; box-shadow:0 0 0 2px #ffd00033 inset, 0 6px 16px rgba(0,0,0,.35);
+  transform: translate(var(--ball-x, 0px), -50%) rotate(var(--ball-rot, 0deg));
+  transition: transform var(--ball-ms) cubic-bezier(.17,.67,.35,1);
+}
+
+/* ===== Контролы ===== */
+.dice-controls{ display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+.ctrl .lb{ font-size:13px; opacity:.8; margin-bottom:6px; }
+.in{
+  background:#1a1a1a; border:1px solid #2b2b2b; color:#fff; border-radius:10px; padding:8px 10px;
+  min-width:140px; outline:none;
+}
+.target-val{ font-weight:900; color:#ffea76; margin-top:6px; text-align:center; }
+.seg{ display:flex; gap:8px; }
+.seg-btn{
+  padding:10px 12px; border-radius:10px; border:1px solid #2b2b2b; background:#111; color:#fff; cursor:pointer;
+}
+.seg-btn.active{
+  border-color:#ffd000; box-shadow:0 0 0 2px #ffd00033 inset;
+  background:linear-gradient(180deg, rgba(255,208,0,0.08), rgba(255,208,0,0.03));
+}
+.btn{ padding:10px 14px; border-radius:12px; border:0; font-weight:800; cursor:pointer; }
+.btn.primary{ background:#ffd000; color:#111; }
+
+/* ===== Результат ===== */
+.dice-result{ margin-top:4px; font-weight:800; }
+.dice-result.win{ color:#3ce77a; }
+.dice-result.lose{ color:#ff3b30; }
+.amt.plus{ color:#3ce77a; }
+.amt.minus{ color:#ff3b30; }

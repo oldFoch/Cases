@@ -1,66 +1,69 @@
-// flashdrops-backend/src/passport.js
+'use strict';
 
-const passport      = require('passport');
 const SteamStrategy = require('passport-steam').Strategy;
-const db            = require('./db');
+const db = require('./db');
 
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
+const FRONTEND_URL  = process.env.FRONTEND_URL || 'http://localhost:5173';
+const STEAM_API_KEY = process.env.STEAM_API_KEY;
+const STEAM_REALM   = process.env.STEAM_REALM || 'http://localhost:5000';
+const STEAM_RETURN  = process.env.STEAM_RETURN_URL || `${STEAM_REALM}/api/auth/steam/return`;
 
-passport.deserializeUser(async (id, done) => {
-  try {
-    const { rows } = await db.query(
-      'SELECT id, steam_id, username, avatar, balance, is_admin FROM users WHERE id = $1',
-      [id]
-    );
-    if (!rows.length) return done(null, false);
-    done(null, rows[0]);
-  } catch (err) {
-    done(err);
-  }
-});
+module.exports = function configurePassport(passport) {
+  passport.serializeUser((user, done) => {
+    done(null, { id: user.id, steam_id: user.steam_id });
+  });
 
-passport.use(new SteamStrategy(
-  {
-    returnURL:  `${process.env.FRONTEND_URL}/api/auth/steam/return`,
-    realm:      process.env.FRONTEND_URL,
-    apiKey:     process.env.STEAM_API_KEY
-  },
-  async (_identifier, profile, done) => {
+  passport.deserializeUser(async (obj, done) => {
     try {
-      const steamId  = profile.id;
-      const username = profile.displayName;
-      const avatar   = profile.photos?.[2]?.value || profile.photos?.[0]?.value || null;
-
-      let { rows } = await db.query(
-        'SELECT id, steam_id, username, avatar, balance, is_admin FROM users WHERE steam_id = $1',
-        [steamId]
-      );
-
-      let user;
-      if (rows.length) {
-        user = rows[0];
-        // опционально обновим ник/аватар
-        await db.query(
-          'UPDATE users SET username = $1, avatar = $2 WHERE id = $3',
-          [username, avatar, user.id]
-        );
-      } else {
-        const insert = await db.query(
-          `INSERT INTO users (steam_id, username, avatar, balance, is_admin)
-           VALUES ($1, $2, $3, 0, FALSE)
-           RETURNING id, steam_id, username, avatar, balance, is_admin`,
-          [steamId, username, avatar]
-        );
-        user = insert.rows[0];
+      let row = null;
+      if (obj?.id) {
+        const r = await db.query('SELECT * FROM users WHERE id = $1', [obj.id]);
+        row = r.rows[0] || null;
+      } else if (obj?.steam_id) {
+        const r = await db.query('SELECT * FROM users WHERE steam_id = $1', [obj.steam_id]);
+        row = r.rows[0] || null;
       }
-
-      done(null, user);
-    } catch (err) {
-      done(err);
+      done(null, row || null);
+    } catch (e) {
+      done(e);
     }
-  }
-));
+  });
 
-module.exports = passport;
+  passport.use(new SteamStrategy(
+    {
+      returnURL: STEAM_RETURN,
+      realm: STEAM_REALM,
+      apiKey: STEAM_API_KEY
+    },
+    async (_identifier, profile, done) => {
+      try {
+        const steamId = String(profile?.id || '').trim();
+        const username =
+          profile?.displayName ||
+          profile?._json?.personaname ||
+          `user_${steamId}`;
+        const avatar =
+          profile?._json?.avatarfull ||
+          profile?.photos?.[2]?.value ||
+          profile?.photos?.[0]?.value ||
+          null;
+
+        if (!steamId) return done(new Error('Missing SteamID'));
+
+        const q = `
+          INSERT INTO users (steam_id, username, avatar, balance, is_admin)
+          VALUES ($1, $2, $3, 0, false)
+          ON CONFLICT (steam_id) DO UPDATE SET
+            username = EXCLUDED.username,
+            avatar   = EXCLUDED.avatar
+          RETURNING *;
+        `;
+
+        const { rows } = await db.query(q, [steamId, username, avatar]);
+        return done(null, rows[0]);
+      } catch (err) {
+        return done(err);
+      }
+    }
+  ));
+};

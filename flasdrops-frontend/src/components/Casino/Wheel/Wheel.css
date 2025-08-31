@@ -1,0 +1,126 @@
+/* src/components/Casino/Wheel/Wheel.css */
+.wheel-page{ padding: 220px; color:#f6d645; }
+.wheel-top-gap{ height: var(--top-gap, 100px); }
+
+.wheel-wrap{
+  display:flex;
+  gap:20px;
+  align-items:stretch;  /* растянуть по высоте */
+  justify-content:center;
+  flex-wrap:nowrap;
+}
+
+.wheel-card{
+  background:#141414;
+  border:1px solid #2b2b2b;
+  border-radius:12px;
+  padding:12px;
+}
+
+/* Сцена */
+.wheel-stage{
+  position:relative;
+  display:grid;
+  place-items:center;
+}
+.wheel-canvas{ border-radius:50%; display:block; }
+.wheel-pointer{
+  position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+  width:0; height:0;
+  border-left:26px solid transparent;
+  border-right:26px solid transparent;
+  border-top:44px solid #000; /* стрелка вверх */
+  z-index:2;
+}
+.wheel-center{
+  position:absolute; display:grid; place-items:center;
+  border-radius:50%;
+  background:#1a1a1a; border:1px solid #2b2b2b;
+  box-shadow:0 0 28px rgba(255,208,0,0.15) inset; color:#ffd000; font-weight:900;
+  pointer-events:none; font-size:34px;
+}
+
+/* Панель ставок */
+.panel{ display:flex; flex-direction:column; gap:12px; width:520px; }
+
+.block{
+  background:#1a1a1a; border:1px solid #2b2b2b; border-radius:10px; padding:10px;
+}
+.block .ttl{ font-weight:800; margin-bottom:8px; }
+.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.input, .select{
+  background:#111; border:1px solid #2b2b2b; color:#fff; border-radius:10px; padding:10px 12px; outline:none;
+}
+.input{ width:140px; }
+.small{ opacity:.75; font-size:12px; }
+
+/* таймер */
+.timer{
+  display:flex; justify-content:space-between; align-items:center;
+  background:#121212; border:1px solid #2b2b2b; border-radius:10px; padding:10px;
+  font-weight:800;
+}
+.timer .big{ font-size:22px; }
+
+/* лайв-ставки — выше и скролл */
+.live-bets{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.live-col{ background:#121212; border:1px solid #2b2b2b; border-radius:10px; padding:8px; }
+.live-col .cap{ font-weight:800; margin-bottom:6px; }
+.bet-item{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; padding:6px 8px; border-radius:8px; background:#0f0f0f;
+  border:1px solid #2b2b2b; margin-bottom:6px;
+}
+.dot{ width:12px; height:12px; border-radius:50%; }
+.dot.red{ background:#ff3b30; }
+.dot.black{ background:#1f1f1f; border:1px solid #333; }
+.dot.yellow{ background:#ffd000; }
+.pill{
+  min-width:34px; height:28px; border-radius:6px; display:grid; place-items:center; font-weight:800; padding:0 6px; border:1px solid #2b2b2b;
+}
+.pill.red{ background:#ff3b30; color:#fff; }
+.pill.black{ background:#1f1f1f; color:#fff; }
+.pill.yellow{ background:#ffd000; color:#111; }
+.sum{ font-weight:800; }
+
+/* результат + история */
+.round-info{
+  display:flex; justify-content:space-between; align-items:center;
+  background:#121212; border:1px solid #2b2b2b; border-radius:10px; padding:10px; font-weight:700;
+}
+.round-pill{ padding:4px 8px; border-radius:8px; background:#2b2b2b; }
+.history{ display:flex; gap:8px; flex-wrap:wrap; }
+.hist-pill{
+  width:44px; height:44px; border-radius:8px; display:grid; place-items:center; font-weight:800; border:1px solid #2b2b2b;
+}
+.hist-pill.red{    background:#ff3b30; color:#fff; }
+.hist-pill.black{  background:#1f1f1f; color:#fff; }
+.hist-pill.yellow{ background:#ffd000; color:#111; }
+
+/* кнопки */
+.btn{ padding:10px 14px; border:0; border-radius:12px; font-weight:800; cursor:pointer; }
+.btn.primary{ background:#ffd000; color:#111; }
+
+/* ПРАВАЯ колонка — ЧАТ (отдельно от панели, одинаковая высота) */
+.chat-side{ width:320px; display:flex; }
+.chat{ display:flex; flex-direction:column; gap:8px; width:100%; }
+.chat-log{
+  height:auto; min-height:200px; flex:1; overflow:auto;
+  background:#0f0f0f; border:1px solid #2b2b2b;
+  border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:10px;
+}
+.msg{
+  display:flex; gap:10px; align-items:flex-start;
+  background:#151515; border:1px solid #2b2b2b; border-radius:10px; padding:8px;
+}
+.msg .avatar{ width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid #333; }
+.msg .body{ display:flex; flex-direction:column; gap:4px; }
+.msg .meta{ display:flex; gap:8px; align-items:center; }
+.msg .name{ font-weight:800; color:#ffd000; }
+.msg .time{ opacity:.6; font-size:12px; }
+.msg .text{ color:#ddd; white-space:pre-wrap; word-break:break-word; }
+.chat-input{ display:flex; gap:8px; }
+.chat-input input{
+  flex:1; background:#1a1a1a; border:1px solid #2b2b2b; color:#fff;
+  border-radius:10px; padding:10px 12px; outline:none;
+}

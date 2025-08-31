@@ -1,237 +1,677 @@
-.case-details {
-  padding: 24px;
-  max-width: 1000px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.case-title { margin-bottom: 8px; }
-
-/* ---- РУЛЕТКА ---- */
-.spin-area {
-  position: relative;
-  margin: 35vh 0 12px;
-  overflow: visible; /* позволяем лого выходить за рамки */
-}
-
-/* окно с лентой */
-.reel-window {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  border: 2px solid #444;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #0f0f14;
-  transition: filter .35s ease, transform .35s ease;
-}
-
-/* лёгкое размытие до открытия */
-.spin-area.idle .reel-window {
-  filter: blur(2.4px) brightness(0.95) saturate(1.05);
-}
-
-/* лента */
-.reel-strip {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateX(0) translateY(-50%);
-  display: flex;
-  gap: 16px; /* === JS CARD_GAP */
-  padding: 0;
-  will-change: transform;
-}
-
-.reel-card {
-  width: 180px;     /* === JS CARD_W */
-  flex: 0 0 180px;
-  text-align: center;
+/* ===== ОБЩИЕ СТИЛИ ===== */
+.case-details-container {
+  min-height: 100vh;
+  background: #0a0a0b;
   color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  padding: 80px 0 40px;
 }
 
-.reel-card img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
+.case-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto 60px;
+  padding: 0 20px;
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 8px 16px;
   border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.case-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ===== СЕКЦИЯ ОТКРЫТИЯ КЕЙСА ===== */
+.case-opening-section {
+  max-width: 1400px;
+  margin: 0 auto 60px;
+  padding: 0 20px;
+}
+
+.case-visual-container {
+  position: relative;
+  margin-bottom: 40px;
+}
+
+/* Баннер кейса */
+.case-banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  position: relative;
+  margin-bottom: 40px;
+  padding: 20px;
+}
+
+.case-banner-image {
+  max-width: 480px;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
+  animation: floatAnimation 3s ease-in-out infinite;
+}
+
+@keyframes floatAnimation {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Скрываем баннер при вращении */
+.case-visual-container.spinning .case-banner {
+  display: none;
+}
+
+/* Рулетка */
+.roulette-container {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: none;
+  padding: 40px 20px;
+}
+
+.case-visual-container.spinning .roulette-container,
+.case-visual-container.done .roulette-container {
   display: block;
-  box-shadow: 0 0 10px rgba(0,0,0,.5);
 }
 
-.reel-card-name {
-  font-size: 12px;
-  margin-top: 6px;
-  opacity: 0.9;
+.roulette-window {
+  position: relative;
+  height: 240px;
+  background: linear-gradient(180deg, #0f0f11 0%, #1a1a1d 100%);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 30px;
 }
 
-/* центральный маркер */
-.center-marker {
+.roulette-mask-left,
+.roulette-mask-right {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  width: 2px;
-  transform: translateX(-1px);
-  background: linear-gradient(to bottom, transparent 0, #ffeb27 40%, #ffeb27 60%, transparent 100%);
-  box-shadow: 0 0 10px rgba(255,235,39,0.7);
+  width: 150px;
+  z-index: 2;
   pointer-events: none;
 }
 
-/* ---- ЛОГО КЕЙСА СВЕРХУ ---- */
-.case-cover {
+.roulette-mask-left {
+  left: 0;
+  background: linear-gradient(90deg, #0a0a0b 0%, transparent 100%);
+}
+
+.roulette-mask-right {
+  right: 0;
+  background: linear-gradient(270deg, #0a0a0b 0%, transparent 100%);
+}
+
+.roulette-center-line {
   position: absolute;
   left: 50%;
-  top: 10%;
-  z-index: 4;
-  transform: translate(-50%, -50%) scale(1);
-  pointer-events: none; /* не мешаем кликам по кнопкам ниже */
-  will-change: transform, opacity, filter;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, #ffeb3b, #ffeb3b, transparent);
+  transform: translateX(-50%);
+  z-index: 3;
+  box-shadow: 0 0 20px rgba(255, 235, 59, 0.5);
 }
 
-/* изображение больше, может выходить за рамки */
-.case-banner-img {
-  width: clamp(380px, 66vw, 260px);
-  height: auto;
-  max-height: none;
-  object-fit: contain;
-  filter: drop-shadow(0 14px 30px rgba(0,0,0,.55));
-  transition: transform .28s ease, opacity .28s ease, filter .28s ease;
-}
-
-/* мягкое пульсирование до открытия */
-.spin-area.idle .case-banner-img {
-  animation: logoPulse 2800ms ease-in-out infinite;
-}
-
-@keyframes logoPulse {
-  0%,100% { transform: scale(1); filter: drop-shadow(0 14px 30px rgba(0,0,0,.55)); }
-  50%     { transform: scale(1.03); filter: drop-shadow(0 18px 36px rgba(0,0,0,.6)); }
-}
-
-/* красивая анимация скрытия лого при старте */
-.spin-area.spinning .case-cover {
-  animation: logoOut 420ms cubic-bezier(.22,.68,0,1.06) forwards;
-}
-
-@keyframes logoOut {
-  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  60%  { opacity: .9; transform: translate(-50%, -54%) scale(1.06) rotate(-0.5deg); }
-  100% { opacity: 0; transform: translate(-50%, -62%) scale(1.14) rotate(-1deg); }
-}
-
-/* КНОПКА И ЦЕНА — ниже ленты */
-.open-controls {
-  margin: 14px 0 20px;
+.roulette-strip {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  transition: none;
+  will-change: transform;
 }
 
-.case-price-tag {
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: #161a2e;
-  border: 1px solid #2a3357;
-  font-weight: 800;
-  letter-spacing: .4px;
-  color: #fff;
-}
-
-.open-btn {
-  min-width: 200px;
-  height: 46px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #e4026c, #ff4d4d);
-  color: #fff;
-  font-weight: 800;
-  letter-spacing: .5px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(228,2,108,.35);
-  transition: transform .08s ease, opacity .2s ease, box-shadow .2s ease;
-}
-.open-btn:hover { opacity: .95; box-shadow: 0 10px 24px rgba(228,2,108,.45); }
-.open-btn:active { transform: translateY(1px); }
-.open-btn:disabled { opacity: .6; cursor: default; box-shadow: none; }
-
-/* ---- РЕЗУЛЬТАТ И КНОПКИ ---- */
-.result-actions { margin: 12px 0 24px; }
-
-.result-card {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid #333;
-  border-radius: 10px;
-  background: #16161e;
-}
-
-.result-card img {
-  width: 80px;
-  height: 64px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.result-info { text-align: left; }
-.result-name { font-weight: 600; }
-.result-price { opacity: 0.85; }
-
-.result-buttons {
-  margin-top: 14px;
+.roulette-item-card {
+  flex: 0 0 180px;
+  width: 180px;
+  height: 220px;
+  margin-right: 20px;
+  text-align: center;
+  padding: 15px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
 }
 
-.spin-again-btn,
-.sell-btn2 {
-  background: #1f8a70;
-  color: #fff;
+.roulette-item-image {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.roulette-item-name {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  font-weight: 500;
+}
+
+/* Контролы открытия */
+.open-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.balance-warning {
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  color: #ff3b30;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.open-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
-  border-radius: 10px;
-  cursor: pointer;
+  padding: 18px 60px;
+  font-size: 18px;
   font-weight: 700;
-  width: 280px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
 }
 
-.spin-again-btn { padding: 20px 24px; font-size: 18px; }
-.sell-btn2 { padding: 10px 24px; font-size: 26px; width: 280px; background: linear-gradient(90deg, #e4026c, #ff4d4d); }
+.open-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
 
-.spin-again-btn:hover,
-.sell-btn2:hover { filter: brightness(1.05); }
+.open-button:hover:before {
+  left: 100%;
+}
 
-/* ---- СЕТКА СОДЕРЖИМОГО КЕЙСА ---- */
-.items-list {
+.open-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.open-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quick-open-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  padding: 10px 24px;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-open-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Результат */
+.result-section {
+  max-width: 500px;
+  margin: 40px auto;
+  text-align: center;
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-card {
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Фоны для разных редкостей */
+.result-card-red {
+  background: linear-gradient(135deg, rgba(235, 75, 75, 0.15), rgba(235, 75, 75, 0.05));
+  border: 2px solid rgba(235, 75, 75, 0.4);
+}
+
+.result-card-pink {
+  background: linear-gradient(135deg, rgba(211, 44, 230, 0.15), rgba(211, 44, 230, 0.05));
+  border: 2px solid rgba(211, 44, 230, 0.4);
+}
+
+.result-card-purple {
+  background: linear-gradient(135deg, rgba(136, 71, 255, 0.15), rgba(136, 71, 255, 0.05));
+  border: 2px solid rgba(136, 71, 255, 0.4);
+}
+
+.result-card-blue {
+  background: linear-gradient(135deg, rgba(75, 105, 255, 0.15), rgba(75, 105, 255, 0.05));
+  border: 2px solid rgba(75, 105, 255, 0.4);
+}
+
+.result-card-lightblue {
+  background: linear-gradient(135deg, rgba(94, 152, 217, 0.15), rgba(94, 152, 217, 0.05));
+  border: 2px solid rgba(94, 152, 217, 0.4);
+}
+
+.result-card-gray {
+  background: linear-gradient(135deg, rgba(138, 138, 138, 0.15), rgba(138, 138, 138, 0.05));
+  border: 2px solid rgba(138, 138, 138, 0.4);
+}
+
+.result-card-gold {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  animation: goldShine 3s ease-in-out infinite;
+}
+
+@keyframes goldShine {
+  0%, 100% { box-shadow: 0 10px 40px rgba(255, 215, 0, 0.2); }
+  50% { box-shadow: 0 15px 60px rgba(255, 215, 0, 0.35); }
+}
+
+.result-card-yellow {
+  background: linear-gradient(135deg, rgba(255, 235, 59, 0.2), rgba(255, 235, 59, 0.05));
+  border: 2px solid rgba(255, 235, 59, 0.5);
+}
+
+.result-image {
+  width: 240px;
+  height: 240px;
+  object-fit: contain;
+  margin: 0 auto 20px;
+  display: block;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+}
+
+.result-name {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.result-price {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.sell-button,
+.upgrade-button,
+.spin-again-button {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sell-button {
+  background: #10b981;
+  color: white;
+}
+
+.sell-button:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.upgrade-button {
+  background: #f59e0b;
+  color: white;
+}
+
+.upgrade-button:hover {
+  background: #d97706;
+  transform: translateY(-2px);
+}
+
+.spin-again-button {
+  background: #667eea;
+  color: white;
+}
+
+.spin-again-button:hover {
+  background: #5468d4;
+  transform: translateY(-2px);
+}
+
+/* ===== СОДЕРЖИМОЕ КЕЙСА ===== */
+.case-contents {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.contents-header {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.items-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  justify-items: center;
+  grid-template-columns: repeat(7, 1fr);
   gap: 16px;
-  margin: 24px auto;
-  max-width: 1000px;
+  margin-bottom: 40px;
 }
 
-.roulette-item { width: 180px; }
+@media (max-width: 1200px) {
+  .items-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .items-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .items-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.item-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+
+.item-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-4px);
+}
+
+.item-card:hover .item-qualities-section {
+  max-height: 300px;
+  opacity: 1;
+}
+
+.item-card:hover .item-content {
+  padding-bottom: 8px;
+}
+
+.item-content {
+  padding: 16px;
+  transition: padding 0.3s;
+}
+
+.item-rarity-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+/* Редкости CS:GO/CS2 */
+.item-rarity-red { background: #eb4b4b; } /* Covert / Тайное */
+.item-rarity-pink { background: #d32ce6; } /* Classified / Засекреченное */
+.item-rarity-purple { background: #8847ff; } /* Restricted / Запрещенное */
+.item-rarity-blue { background: #4b69ff; } /* Mil-Spec / Армейское */
+.item-rarity-lightblue { background: #5e98d9; } /* Industrial / Промышленное */
+.item-rarity-gray { background: #8a8a8a; } /* Consumer / Ширпотреб */
+.item-rarity-gold { background: #ffd700; } /* Rare Special / Редкое */
+.item-rarity-yellow { background: #ffeb3b; } /* Contraband / Контрабанда */
+
+.item-image-container {
+  position: relative;
+  margin-bottom: 12px;
+}
 
 .item-image {
   width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
+  height: 140px;
+  object-fit: contain;
 }
 
-.item-info { margin-top: 6px; }
-.item-name { display: block; font-weight: 600; }
-.item-price { display: block; color: #888; }
+.item-chance {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
 
-/* адаптив */
+.item-details {
+  text-align: center;
+}
+
+.item-name {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* Секция качеств внутри карточки */
+.item-qualities-section {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.qualities-content {
+  padding: 12px 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.qualities-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.qualities-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.qualities-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.qualities-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.qualities-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qualities-header span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qualities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quality-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.quality-item:last-child {
+  border-bottom: none;
+}
+
+.quality-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+}
+
+.quality-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quality-value-price {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.quality-badge {
+  font-size: 9px;
+  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.qualities-loading {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  padding: 8px;
+}
+
+.qualities-empty {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  padding: 8px;
+}
+
+/* Адаптивность */
 @media (max-width: 768px) {
-  .spin-area { margin: 30vh 0 12px; }
-  .case-banner-img { width: clamp(360px, 84vw, 720px); }
-  .open-btn { min-width: 180px; }
-  .spin-again-btn, .sell-btn { width: 240px; }
+  .case-title {
+    font-size: 22px;
+  }
+
+  .case-banner {
+    height: 240px;
+  }
+
+  .case-banner-image {
+    max-width: 300px;
+  }
+
+  .items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .item-image {
+    height: 100px;
+  }
+
+  .open-button {
+    padding: 14px 40px;
+    font-size: 16px;
+  }
+
+  .result-actions {
+    flex-direction: column;
+  }
 }

@@ -1,0 +1,91 @@
+:root {
+  --sm-width: 200px;
+}
+
+.side-menu {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 1000;
+  pointer-events: none; /* кликабельно только внутри панели */
+}
+
+.sm-wrap {
+  position: relative;
+  pointer-events: auto;
+}
+
+.sm-panel {
+  width: var(--sm-width);
+  position: relative;
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
+  padding: 10px;
+  box-shadow: 12px 0 30px rgba(0,0,0,0.25);
+  overflow: hidden; /* обрезаем блюр по радиусу */
+  background: rgba(18, 18, 18, 0.35);
+}
+
+/* подложка с блюром */
+.sm-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(18, 18, 18, 0.25);
+  z-index: 0;
+}
+
+.sm-nav, .sm-toggle {
+  position: relative;
+  z-index: 1; /* контент поверх блюра */
+}
+
+.sm-toggle {
+  position: absolute;
+  top: 50%;
+  right: -14px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 48px;
+  border: 0;
+  border-radius: 0 8px 8px 0;
+  background: #ffd000;
+  color: #111;
+  font-weight: 900;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+.sm-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sm-nav a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.sm-nav a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sm-panel.closed {
+  transform: translateX(calc(-1 * var(--sm-width) - 10px));
+  transition: transform 0.3s ease;
+}
+
+.sm-panel.open {
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
